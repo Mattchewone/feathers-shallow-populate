@@ -49,6 +49,61 @@ const services = {
 }
 
 describe('shallowPopulate hook', function () {
+  it('throws when used without an includes object', function (done) {
+    const context = {
+      method: 'create',
+      type: 'before',
+      params: {},
+      data: {
+        id: '11',
+        name: 'Dumb Stuff',
+        postsId: ['111', '222', '333']
+      }
+    }
+
+    try {
+      const shallowPopulate = makePopulate()
+      shallowPopulate(context)
+      .then(done)
+      .catch(done)
+    } catch (error) {
+      assert(error.message === 'shallowPopulate hook: You must provide one or more relationships in the `include` option.', 'threw correct error message')
+      done()
+    }
+  })
+
+  it('throws when an includes array has missing properties', function (done) {
+    const options = {
+      include: {
+        // from: 'users',
+        service: 'posts',
+        nameAs: 'posts',
+        keyHere: 'postsId'
+      }
+    }
+
+    const context = {
+      method: 'create',
+      type: 'before',
+      params: {},
+      data: {
+        id: '11',
+        name: 'Dumb Stuff',
+        postsId: ['111', '222', '333']
+      }
+    }
+
+    try {
+      const shallowPopulate = makePopulate(options)
+      shallowPopulate(context)
+      .then(done)
+      .catch(done)
+    } catch (error) {
+      assert(error.message === 'shallowPopulate hook: Every `include` must contain `service`, `nameAs`, `keyHere`, and `keyThere` properties', 'error has correct message')
+      done()
+    }
+  })
+
   describe('Before Hook:', function () {
     describe('Single Record:', function () {
       describe('Single Relationship:', function () {
@@ -71,7 +126,6 @@ describe('shallowPopulate hook', function () {
             method: 'create',
             type: 'before',
             params: {},
-            // Data for a single release
             data: {
               id: '11',
               name: 'Dumb Stuff',
@@ -109,7 +163,6 @@ describe('shallowPopulate hook', function () {
             method: 'create',
             type: 'before',
             params: {},
-            // Data for a single release
             data: {
               id: '11',
               name: 'Dumb Stuff'
@@ -146,7 +199,6 @@ describe('shallowPopulate hook', function () {
             method: 'create',
             type: 'before',
             params: {},
-            // Data for a single track
             data: {
               id: '111',
               name: 'My Monkey and Me'
@@ -196,7 +248,6 @@ describe('shallowPopulate hook', function () {
             method: 'create',
             type: 'before',
             params: {},
-            // Data for a single release
             data: {
               id: '11',
               name: 'Dumb Stuff',
@@ -242,7 +293,6 @@ describe('shallowPopulate hook', function () {
             method: 'create',
             type: 'before',
             params: {},
-            // Data for a single release
             data: {
               id: '333',
               name: 'If I were a banana...'
@@ -288,7 +338,6 @@ describe('shallowPopulate hook', function () {
             method: 'create',
             type: 'before',
             params: {},
-            // Data for a single release
             data: [
               {
                 id: '11',
@@ -393,7 +442,6 @@ describe('shallowPopulate hook', function () {
             method: 'create',
             type: 'before',
             params: {},
-            // Data for a single release
             data: [
               {
                 id: '11',
@@ -453,7 +501,6 @@ describe('shallowPopulate hook', function () {
             method: 'create',
             type: 'before',
             params: {},
-            // Data for a single release
             data: [
               {
                 id: '333',
@@ -510,7 +557,6 @@ describe('shallowPopulate hook', function () {
             method: 'create',
             type: 'after',
             params: {},
-            // Data for a single release
             result: {
               id: '11',
               name: 'Dumb Stuff',
@@ -598,7 +644,6 @@ describe('shallowPopulate hook', function () {
             method: 'create',
             type: 'after',
             params: {},
-            // Data for a single release
             result: {
               id: '11',
               name: 'Dumb Stuff',
@@ -644,7 +689,6 @@ describe('shallowPopulate hook', function () {
             method: 'create',
             type: 'after',
             params: {},
-            // Data for a single release
             result: {
               id: '333',
               name: 'If I were a banana...'
@@ -690,7 +734,6 @@ describe('shallowPopulate hook', function () {
             method: 'create',
             type: 'after',
             params: {},
-            // Data for a single release
             result: [
               {
                 id: '11',
@@ -795,21 +838,22 @@ describe('shallowPopulate hook', function () {
             method: 'create',
             type: 'after',
             params: {},
-            // Data for a single release
-            result: [
-              {
-                id: '11',
-                name: 'Dumb Stuff',
-                postsId: ['111', '222', '333'],
-                tagIds: ['1111', '3333']
-              },
-              {
-                id: '22',
-                name: 'Smart Stuff',
-                postsId: ['111', '333'],
-                tagIds: ['3333']
-              }
-            ]
+            result: {
+              data: [
+                {
+                  id: '11',
+                  name: 'Dumb Stuff',
+                  postsId: ['111', '222', '333'],
+                  tagIds: ['1111', '3333']
+                },
+                {
+                  id: '22',
+                  name: 'Smart Stuff',
+                  postsId: ['111', '333'],
+                  tagIds: ['3333']
+                }
+              ]
+            }
           }
 
           const shallowPopulate = makePopulate(options)
@@ -817,12 +861,13 @@ describe('shallowPopulate hook', function () {
           shallowPopulate(context)
           .then(context => {
             const { result } = context
+            const { data } = result
 
-            assert(result[0].posts.length === 3, 'result[0] should have correct posts data')
-            assert(result[0].tags.length === 2, 'result[0] should have correct tags data')
+            assert(data[0].posts.length === 3, 'result[0] should have correct posts data')
+            assert(data[0].tags.length === 2, 'result[0] should have correct tags data')
 
-            assert(result[1].posts.length === 2, 'result[1] should have correct posts data')
-            assert(result[1].tags.length === 1, 'result[1] should have correct tags data')
+            assert(data[1].posts.length === 2, 'result[1] should have correct posts data')
+            assert(data[1].tags.length === 1, 'result[1] should have correct tags data')
 
             done()
           })
@@ -855,7 +900,6 @@ describe('shallowPopulate hook', function () {
             method: 'create',
             type: 'after',
             params: {},
-            // Data for a single release
             result: [
               {
                 id: '333',
