@@ -1,10 +1,8 @@
 # feathers-shallow-populate
 
-[![Build Status](https://travis-ci.org/https://github.com/Mattchewone/feathers-shallow-populate.git.png?branch=master)](https://travis-ci.org/https://github.com/Mattchewone/feathers-shallow-populate.git)
-[![Code Climate](https://codeclimate.com/github/https://github.com/Mattchewone/feathers-shallow-populate.git/badges/gpa.svg)](https://codeclimate.com/github/https://github.com/Mattchewone/feathers-shallow-populate.git)
-[![Test Coverage](https://codeclimate.com/github/https://github.com/Mattchewone/feathers-shallow-populate.git/badges/coverage.svg)](https://codeclimate.com/github/https://github.com/Mattchewone/feathers-shallow-populate.git/coverage)
-[![Dependency Status](https://img.shields.io/david/https://github.com/Mattchewone/feathers-shallow-populate.git.svg?style=flat-square)](https://david-dm.org/https://github.com/Mattchewone/feathers-shallow-populate.git)
-[![Download Status](https://img.shields.io/npm/dm/feathers-shallow-populate.svg?style=flat-square)](https://www.npmjs.com/package/feathers-shallow-populate)
+[![Build Status](https://travis-ci.org/Mattchewone/feathers-shallow-populate.png?branch=master)](https://travis-ci.org/Mattchewone/feathers-shallow-populate)
+<!-- [![Dependency Status](https://img.shields.io/david/feathers-plus/feathers-mocha-utils.svg?style=flat-square)](https://david-dm.org/feathers-plus/feathers-mocha-utils)
+[![Download Status](https://img.shields.io/npm/dm/feathers-mocha-utils.svg?style=flat-square)](https://www.npmjs.com/package/feathers-mocha-utils) -->
 
 > Feathers Shallow Populate
 
@@ -13,10 +11,6 @@
 ```
 npm install feathers-shallow-populate --save
 ```
-
-## Documentation
-
-Please refer to the [feathers-shallow-populate documentation](http://docs.feathersjs.com/) for more details.
 
 ## Complete Example
 
