@@ -14,10 +14,13 @@
     "url": "git://github.com/https://github.com/Mattchewone/feathers-shallow-populate.git.git"
   },
   "author": {
-    "name": "Matt Chaffe",
-    "email": "matt@mattchaffe.uk"
+    "name": "Feathers contributors",
+    "email": "hello@feathersjs.com",
+    "url": "https://feathersjs.com"
   },
-  "contributors": [],
+  "contributors": [
+    "Matt Chaffe <matt@mattchaffe.uk> (https://mattchaffe.uk)"
+  ],
   "bugs": {
     "url": "https://github.com/https://github.com/Mattchewone/feathers-shallow-populate.git/issues"
   },
