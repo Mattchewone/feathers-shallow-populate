@@ -1,5 +1,8 @@
 # Change Log
 
+## [v0.1.1](https://github.com/Mattchewone/feathers-shallow-populate/tree/v0.1.1) (2017-10-02)
+[Full Changelog](https://github.com/Mattchewone/feathers-shallow-populate/compare/v0.1.0...v0.1.1)
+
 ## [v0.1.0](https://github.com/Mattchewone/feathers-shallow-populate/tree/v0.1.0) (2017-10-02)
 
 
