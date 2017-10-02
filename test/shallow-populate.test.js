@@ -107,6 +107,45 @@ describe('shallowPopulate hook', function () {
   describe('Before Hook:', function () {
     describe('Single Record:', function () {
       describe('Single Relationship:', function () {
+        it('populates from local keys dot notation', function (done) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'posts',
+              nameAs: 'meta.posts',
+              keyHere: 'meta.postsId',
+              keyThere: 'id'
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: {
+              id: '11',
+              name: 'Dumb Stuff',
+              meta: {
+                postsId: ['111']
+              }
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(data.meta.posts.length, 'posts should have been populated')
+            done()
+          })
+          .catch(done)
+        })
+
         it('populates from local keys', function (done) {
           const options = {
             include: {
@@ -220,6 +259,56 @@ describe('shallowPopulate hook', function () {
       })
 
       describe('Multiple Relationship:', function () {
+        it('populates from local keys dot notation', function (done) {
+          const options = {
+            include: [
+              {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'meta.posts',
+                keyHere: 'meta.postsId',
+                keyThere: 'id'
+              },
+              {
+                // from: 'users',
+                service: 'tags',
+                nameAs: 'meta.tags',
+                keyHere: 'meta.tagIds',
+                keyThere: 'id'
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: {
+              id: '11',
+              name: 'Dumb Stuff',
+              meta: {
+                postsId: ['111', '222', '333'],
+                tagIds: ['1111', '3333']
+              }
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(data.meta.posts.length, 'posts should have been populated')
+            assert(data.meta.tags.length, 'posts should have been populated')
+            done()
+          })
+          .catch(done)
+        })
+
         it('populates from local keys', function (done) {
           const options = {
             include: [
@@ -319,6 +408,54 @@ describe('shallowPopulate hook', function () {
 
     describe('Multiple Record:', function () {
       describe('Single Relationship:', function () {
+        it('populates from local keys dot notation', function (done) {
+          const options = {
+            include: {
+              service: 'posts',
+              nameAs: 'meta.posts',
+              keyHere: 'meta.postsId',
+              keyThere: 'id'
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: [
+              {
+                id: '11',
+                name: 'Dumb Stuff',
+                meta: {
+                  postsId: ['111', '333']
+                }
+              },
+              {
+                id: '22',
+                name: 'Dumb Stuff',
+                meta: {
+                  postsId: ['222', '333', '111']
+                }
+              }
+            ]
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(data[0].meta.posts.length === 2, 'data[0] posts should have been populated')
+            assert(data[1].meta.posts.length === 3, 'data[0] posts should have been populated')
+            done()
+          })
+          .catch(done)
+        })
+
         it('populates from local keys', function (done) {
           const options = {
             include: {
@@ -538,6 +675,45 @@ describe('shallowPopulate hook', function () {
   describe('After Hook', function () {
     describe('Single Record:', function () {
       describe('Single Relationship:', function () {
+        it('populates from local keys dot notation', function (done) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'posts',
+              nameAs: 'meta.posts',
+              keyHere: 'meta.postsId',
+              keyThere: 'id'
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'after',
+            params: {},
+            result: {
+              id: '11',
+              name: 'Dumb Stuff',
+              meta: {
+                postsId: ['111', '222', '333']
+              }
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { result } = context
+            assert(result.meta.posts.length === 3, 'posts should have been populated')
+            done()
+          })
+          .catch(done)
+        })
+
         it('populates from local keys', function (done) {
           const options = {
             include: {
@@ -616,6 +792,54 @@ describe('shallowPopulate hook', function () {
       })
 
       describe('Multiple Relationship:', function () {
+        it('populates from local keys dot notation', function (done) {
+          const options = {
+            include: [
+              {
+                service: 'posts',
+                nameAs: 'meta.posts',
+                keyHere: 'meta.postsId',
+                keyThere: 'id'
+              },
+              {
+                service: 'tags',
+                nameAs: 'meta.tags',
+                keyHere: 'meta.tagIds',
+                keyThere: 'id'
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'after',
+            params: {},
+            result: {
+              id: '11',
+              name: 'Dumb Stuff',
+              meta: {
+                postsId: ['111', '222', '333'],
+                tagIds: ['1111', '3333']
+              }
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { result } = context
+            assert(result.meta.posts.length === 3, 'posts should have been populated')
+            assert(result.meta.tags.length === 2, 'tags should have been populated')
+            done()
+          })
+          .catch(done)
+        })
+
         it('populates from local keys', function (done) {
           const options = {
             include: [
@@ -715,6 +939,57 @@ describe('shallowPopulate hook', function () {
 
     describe('Multiple Record:', function () {
       describe('Single Relationship:', function () {
+        it('populates from local keys dot notation', function (done) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'posts',
+              nameAs: 'meta.posts',
+              keyHere: 'meta.postsId',
+              keyThere: 'id'
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'after',
+            params: {},
+            result: [
+              {
+                id: '11',
+                name: 'Dumb Stuff',
+                meta: {
+                  postsId: ['111', '222']
+                }
+              },
+              {
+                id: '22',
+                name: 'Smart Stuff',
+                meta: {
+                  postsId: ['333']
+                }
+              }
+            ]
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { result } = context
+
+            assert(result[0].meta.posts.length === 2, 'result[0] should have correct posts data')
+            assert(result[1].meta.posts.length === 1, 'result[1] should have correct posts data')
+
+            done()
+          })
+          .catch(done)
+        })
+
         it('populates from local keys', function (done) {
           const options = {
             include: {
@@ -810,6 +1085,72 @@ describe('shallowPopulate hook', function () {
       })
 
       describe('Multiple Relationship:', function () {
+        it('populates from local keys dot notation', function (done) {
+          const options = {
+            include: [
+              {
+                service: 'posts',
+                nameAs: 'meta.posts',
+                keyHere: 'meta.postsId',
+                keyThere: 'id'
+              },
+              {
+                service: 'tags',
+                nameAs: 'meta.tags',
+                keyHere: 'meta.tagIds',
+                keyThere: 'id'
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'after',
+            params: {},
+            result: {
+              data: [
+                {
+                  id: '11',
+                  name: 'Dumb Stuff',
+                  meta: {
+                    postsId: ['111', '222', '333'],
+                    tagIds: ['1111', '3333']
+                  }
+                },
+                {
+                  id: '22',
+                  name: 'Smart Stuff',
+                  meta: {
+                    postsId: ['111', '333'],
+                    tagIds: ['3333']
+                  }
+                }
+              ]
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { result } = context
+            const { data } = result
+
+            assert(data[0].meta.posts.length === 3, 'result[0] should have correct posts data')
+            assert(data[0].meta.tags.length === 2, 'result[0] should have correct tags data')
+
+            assert(data[1].meta.posts.length === 2, 'result[1] should have correct posts data')
+            assert(data[1].meta.tags.length === 1, 'result[1] should have correct tags data')
+
+            done()
+          })
+          .catch(done)
+        })
+
         it('populates from local keys', function (done) {
           const options = {
             include: [
