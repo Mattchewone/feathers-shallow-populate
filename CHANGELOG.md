@@ -1,5 +1,12 @@
 # Change Log
 
+## [v0.1.6](https://github.com/Mattchewone/feathers-shallow-populate/tree/v0.1.6) (2017-10-09)
+[Full Changelog](https://github.com/Mattchewone/feathers-shallow-populate/compare/v0.1.5...v0.1.6)
+
+**Closed issues:**
+
+- Populate getByDot items [\#3](https://github.com/Mattchewone/feathers-shallow-populate/issues/3)
+
 ## [v0.1.5](https://github.com/Mattchewone/feathers-shallow-populate/tree/v0.1.5) (2017-10-02)
 [Full Changelog](https://github.com/Mattchewone/feathers-shallow-populate/compare/v0.1.4...v0.1.5)
 
