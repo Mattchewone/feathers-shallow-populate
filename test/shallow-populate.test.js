@@ -107,6 +107,42 @@ describe('shallowPopulate hook', function () {
   describe('Before Hook:', function () {
     describe('Single Record:', function () {
       describe('Single Relationship:', function () {
+        it('does nothing if no populate data on item', function (done) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'posts',
+              nameAs: 'posts',
+              keyHere: 'postsId',
+              keyThere: 'id'
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: {
+              id: '11',
+              name: 'Dumb Stuff'
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(!data.posts, 'posts should have not been populated')
+            done()
+          })
+          .catch(done)
+        })
+
         it('populates from local keys dot notation', function (done) {
           const options = {
             include: {
@@ -259,6 +295,53 @@ describe('shallowPopulate hook', function () {
       })
 
       describe('Multiple Relationship:', function () {
+        it('does nothing if some populate data on item does not exist', function (done) {
+          const options = {
+            include: [
+              {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id'
+              },
+              {
+                // from: 'users',
+                service: 'tags',
+                nameAs: 'tags',
+                keyHere: 'tagIds',
+                keyThere: 'id'
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: {
+              id: '11',
+              name: 'Dumb Stuff',
+              tagIds: ['1111', '3333']
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(!data.posts, 'posts should have not been populated')
+            assert(data.tags.length === 2, 'tags have been populated')
+            done()
+          })
+          .catch(done)
+        })
+
         it('populates from local keys dot notation', function (done) {
           const options = {
             include: [
@@ -408,6 +491,50 @@ describe('shallowPopulate hook', function () {
 
     describe('Multiple Record:', function () {
       describe('Single Relationship:', function () {
+        it('does nothing if some populate data on item does not exist', function (done) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'tags',
+              nameAs: 'tags',
+              keyHere: 'tagIds',
+              keyThere: 'id'
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: [
+              {
+                id: '11',
+                name: 'Dumb Stuff',
+                tagIds: ['1111', '3333']
+              },
+              {
+                id: '22',
+                name: 'Smart Stuff'
+              }
+            ]
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(data[0].tags.length === 2, 'tags have been populated')
+            assert(!data[1].tags, 'tags have not been populated')
+            done()
+          })
+          .catch(done)
+        })
+
         it('populates from local keys dot notation', function (done) {
           const options = {
             include: {
@@ -551,6 +678,62 @@ describe('shallowPopulate hook', function () {
       })
 
       describe('Multiple Relationship:', function () {
+        it('does nothing if some populate data on item does not exist', function (done) {
+          const options = {
+            include: [
+              {
+                // from: 'users',
+                service: 'tags',
+                nameAs: 'tags',
+                keyHere: 'tagIds',
+                keyThere: 'id'
+              },
+              {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postIds',
+                keyThere: 'id'
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: [
+              {
+                id: '11',
+                name: 'Dumb Stuff',
+                postIds: ['111', '222', '333']
+              },
+              {
+                id: '22',
+                name: 'Smart Stuff',
+                postIds: ['111', '333']
+              }
+            ]
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(data[0].posts.length === 3, 'posts have been populated')
+            assert(!data[0].tags, 'tags have not been populated')
+            assert(!data[1].tags, 'tags have not been populated')
+            assert(data[1].posts.length === 2, 'posts have been populated')
+            done()
+          })
+          .catch(done)
+        })
+
         it('populates from local keys', function (done) {
           const options = {
             include: [
