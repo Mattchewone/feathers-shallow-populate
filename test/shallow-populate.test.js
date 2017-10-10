@@ -105,8 +105,122 @@ describe('shallowPopulate hook', function () {
   })
 
   describe('Before Hook:', function () {
+    it('does nothing when data is empty', function (done) {
+      const options = {
+        include: {
+          // from: 'users',
+          service: 'posts',
+          nameAs: 'post',
+          keyHere: 'postIds',
+          keyThere: 'id',
+          asArray: false
+        }
+      }
+      const context = {
+        app: {
+          service (path) {
+            return services[path]
+          }
+        },
+        method: 'create',
+        type: 'before',
+        params: {},
+        data: {}
+      }
+
+      const shallowPopulate = makePopulate(options)
+
+      shallowPopulate(context)
+      .then(response => {
+        const { data } = response
+        assert.deepEqual(data, context.data, 'data should not be touched')
+        done()
+      })
+      .catch(done)
+    })
+
     describe('Single Record:', function () {
       describe('Single Relationship:', function () {
+        it('as object', function (done) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'posts',
+              nameAs: 'post',
+              keyHere: 'postIds',
+              keyThere: 'id',
+              asArray: false
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: {
+              id: '11',
+              name: 'Dumb Stuff',
+              postIds: '111'
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(data.post, 'post should have been populated')
+            assert(!Array.isArray(data.post), 'post should not be an array')
+            assert(data.post.id === '111', 'post has correct id')
+            done()
+          })
+          .catch(done)
+        })
+
+        it('as object when array', function (done) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'posts',
+              nameAs: 'post',
+              keyHere: 'postIds',
+              keyThere: 'id',
+              asArray: false
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: {
+              id: '11',
+              name: 'Dumb Stuff',
+              postIds: ['111', '222']
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(data.post, 'post should have been populated')
+            assert(!Array.isArray(data.post), 'post should not be an array')
+            assert(data.post.id === '111', 'post has correct id')
+            done()
+          })
+          .catch(done)
+        })
+
         it('does nothing if no populate data on item', function (done) {
           const options = {
             include: {
@@ -295,6 +409,108 @@ describe('shallowPopulate hook', function () {
       })
 
       describe('Multiple Relationship:', function () {
+        it('as object', function (done) {
+          const options = {
+            include: [
+              {
+                // from: 'users',
+                service: 'tags',
+                nameAs: 'tags',
+                keyHere: 'tagIds',
+                keyThere: 'id'
+              },
+              {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'post',
+                keyHere: 'postIds',
+                keyThere: 'id',
+                asArray: false
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: {
+              id: '11',
+              name: 'Dumb Stuff',
+              postIds: '111',
+              tagIds: ['1111']
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(data.post, 'post should have been populated')
+            assert(!Array.isArray(data.post), 'post should not be an array')
+            assert(data.post.id === '111', 'post has correct id')
+            assert(Array.isArray(data.tags), 'tags is an array')
+            done()
+          })
+          .catch(done)
+        })
+
+        it('as object when array', function (done) {
+          const options = {
+            include: [
+              {
+                // from: 'users',
+                service: 'tags',
+                nameAs: 'tags',
+                keyHere: 'tagIds',
+                keyThere: 'id'
+              },
+              {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'post',
+                keyHere: 'postIds',
+                keyThere: 'id',
+                asArray: false
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: {
+              id: '11',
+              name: 'Dumb Stuff',
+              postIds: ['111', '222'],
+              tagIds: ['1111', '3333']
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(data.post, 'post should have been populated')
+            assert(!Array.isArray(data.post), 'post should not be an array')
+            assert(data.post.id === '111', 'post has correct id')
+            assert(Array.isArray(data.tags), 'tags is an array')
+            done()
+          })
+          .catch(done)
+        })
+
         it('does nothing if some populate data on item does not exist', function (done) {
           const options = {
             include: [
@@ -476,10 +692,8 @@ describe('shallowPopulate hook', function () {
           shallowPopulate(context)
           .then(context => {
             const { data } = context
-
             assert(data.users.length === 1, 'data should have correct users data')
             assert(data.comments.length === 2, 'data should have correct comments data')
-
             done()
           })
           .catch(done)
@@ -491,6 +705,111 @@ describe('shallowPopulate hook', function () {
 
     describe('Multiple Record:', function () {
       describe('Single Relationship:', function () {
+        it('as object', function (done) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'posts',
+              nameAs: 'post',
+              keyHere: 'postIds',
+              keyThere: 'id',
+              asArray: false
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: [
+              {
+                id: '11',
+                name: 'Dumb Stuff',
+                postIds: ['111', '222']
+              },
+              {
+                id: '22',
+                name: 'Smart Stuff',
+                postIds: '222'
+              },
+              {
+                id: '33',
+                name: 'Some Stuff',
+                postIds: ['111']
+              }
+            ]
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(data[0].post, 'post should have been populated')
+            assert(!Array.isArray(data[0].post), 'post should not be an array')
+            assert(data[0].post.id === '111', 'post has correct id')
+            assert(data[1].post, 'post should have been populated')
+            assert(!Array.isArray(data[1].post), 'post should not be an array')
+            assert(data[1].post.id === '222', 'post has correct id')
+            done()
+          })
+          .catch(done)
+        })
+
+        it('as object when array', function (done) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'posts',
+              nameAs: 'post',
+              keyHere: 'postIds',
+              keyThere: 'id',
+              asArray: false
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: [
+              {
+                id: '11',
+                name: 'Dumb Stuff',
+                postIds: ['111', '222']
+              },
+              {
+                id: '22',
+                name: 'Smart Stuff',
+                postIds: ['222', '111']
+              }
+            ]
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(data[0].post, 'post should have been populated')
+            assert(!Array.isArray(data[0].post), 'post should not be an array')
+            assert(data[0].post.id === '111', 'post has correct id')
+            assert(data[1].post, 'post should have been populated')
+            assert(!Array.isArray(data[1].post), 'post should not be an array')
+            assert(data[1].post.id === '222', 'post has correct id')
+            done()
+          })
+          .catch(done)
+        })
+
         it('does nothing if some populate data on item does not exist', function (done) {
           const options = {
             include: {
@@ -678,6 +997,138 @@ describe('shallowPopulate hook', function () {
       })
 
       describe('Multiple Relationship:', function () {
+        it('as object', function (done) {
+          const options = {
+            include: [
+              {
+                // from: 'users',
+                service: 'tags',
+                nameAs: 'tags',
+                keyHere: 'tagIds',
+                keyThere: 'id'
+              },
+              {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'post',
+                keyHere: 'postIds',
+                keyThere: 'id',
+                asArray: false
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: [
+              {
+                id: '11',
+                name: 'Dumb Stuff',
+                postIds: '111',
+                tagIds: ['1111', '3333']
+              },
+              {
+                id: '22',
+                name: 'Smart Stuff',
+                postIds: '222',
+                tagIds: ['1111']
+              }
+            ]
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(data[0].post, 'post should have been populated')
+            assert(!Array.isArray(data[0].post), 'post should not be an array')
+            assert(data[0].post.id === '111', 'post has correct id')
+            assert(data[0].tags, 'tags should have been populated')
+            assert(Array.isArray(data[0].tags), 'tags should be an array')
+
+            assert(data[1].post, 'post should have been populated')
+            assert(!Array.isArray(data[1].post), 'post should not be an array')
+            assert(data[1].post.id === '222', 'post has correct id')
+            assert(data[1].tags, 'tags should have been populated')
+            assert(Array.isArray(data[1].tags), 'tags should be an array')
+            done()
+          })
+          .catch(done)
+        })
+
+        it('as object when array', function (done) {
+          const options = {
+            include: [
+              {
+                // from: 'users',
+                service: 'tags',
+                nameAs: 'tags',
+                keyHere: 'tagIds',
+                keyThere: 'id'
+              },
+              {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'post',
+                keyHere: 'postIds',
+                keyThere: 'id',
+                asArray: false
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: [
+              {
+                id: '11',
+                name: 'Dumb Stuff',
+                postIds: ['111', '222'],
+                tagIds: ['1111', '3333']
+              },
+              {
+                id: '22',
+                name: 'Smart Stuff',
+                postIds: ['222'],
+                tagIds: ['1111']
+              }
+            ]
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(data[0].post, 'post should have been populated')
+            assert(!Array.isArray(data[0].post), 'post should not be an array')
+            assert(data[0].post.id === '111', 'post has correct id')
+            assert(data[0].tags, 'tags should have been populated')
+            assert(Array.isArray(data[0].tags), 'tags should be an array')
+
+            assert(data[1].post, 'post should have been populated')
+            assert(!Array.isArray(data[1].post), 'post should not be an array')
+            assert(data[1].post.id === '222', 'post has correct id')
+            assert(data[1].tags, 'tags should have been populated')
+            assert(Array.isArray(data[1].tags), 'tags should be an array')
+            done()
+          })
+          .catch(done)
+        })
+
         it('does nothing if some populate data on item does not exist', function (done) {
           const options = {
             include: [
@@ -856,8 +1307,164 @@ describe('shallowPopulate hook', function () {
   })
 
   describe('After Hook', function () {
+    it('does nothing when result is empty', function (done) {
+      const options = {
+        include: {
+          // from: 'users',
+          service: 'posts',
+          nameAs: 'post',
+          keyHere: 'postIds',
+          keyThere: 'id',
+          asArray: false
+        }
+      }
+      const context = {
+        app: {
+          service (path) {
+            return services[path]
+          }
+        },
+        method: 'create',
+        type: 'after',
+        params: {},
+        result: {
+          data: {}
+        }
+      }
+
+      const shallowPopulate = makePopulate(options)
+
+      shallowPopulate(context)
+      .then(response => {
+        const { result } = response
+        assert.deepEqual(result.data, context.result.data, 'data should not be touched')
+        done()
+      })
+      .catch(done)
+    })
+
     describe('Single Record:', function () {
       describe('Single Relationship:', function () {
+        it('as object', function (done) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'posts',
+              nameAs: 'post',
+              keyHere: 'postIds',
+              keyThere: 'id',
+              asArray: false
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'after',
+            params: {},
+            result: {
+              data: {
+                id: '11',
+                name: 'Dumb Stuff',
+                postIds: '111'
+              }
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { result } = context
+            assert(result.data.post, 'post should have been populated')
+            assert(!Array.isArray(result.data.post), 'post should not be an array')
+            assert(result.data.post.id === '111', 'post has correct id')
+            done()
+          })
+          .catch(done)
+        })
+
+        it('as object when array', function (done) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'posts',
+              nameAs: 'post',
+              keyHere: 'postIds',
+              keyThere: 'id',
+              asArray: false
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'after',
+            params: {},
+            result: {
+              data: {
+                id: '11',
+                name: 'Dumb Stuff',
+                postIds: ['111', '222']
+              }
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { result } = context
+            assert(result.data.post, 'post should have been populated')
+            assert(!Array.isArray(result.data.post), 'post should not be an array')
+            assert(result.data.post.id === '111', 'post has correct id')
+            done()
+          })
+          .catch(done)
+        })
+
+        it('does nothing if some populate data on item does not exist', function (done) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'tags',
+              nameAs: 'tags',
+              keyHere: 'tagIds',
+              keyThere: 'id'
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: {
+              id: '22',
+              name: 'Smart Stuff'
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(!data.tags, 'tags have not been populated')
+            done()
+          })
+          .catch(done)
+        })
+
         it('populates from local keys dot notation', function (done) {
           const options = {
             include: {
@@ -975,6 +1582,157 @@ describe('shallowPopulate hook', function () {
       })
 
       describe('Multiple Relationship:', function () {
+        it('as object', function (done) {
+          const options = {
+            include: [
+              {
+                // from: 'users',
+                service: 'tags',
+                nameAs: 'tags',
+                keyHere: 'tagIds',
+                keyThere: 'id'
+              },
+              {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'post',
+                keyHere: 'postIds',
+                keyThere: 'id',
+                asArray: false
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'after',
+            params: {},
+            result: {
+              data: {
+                id: '11',
+                name: 'Dumb Stuff',
+                postIds: '111',
+                tagIds: ['1111']
+              }
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { result } = context
+            assert(result.data.post, 'post should have been populated')
+            assert(!Array.isArray(result.data.post), 'post should not be an array')
+            assert(result.data.post.id === '111', 'post has correct id')
+            assert(Array.isArray(result.data.tags), 'tags is an array')
+            done()
+          })
+          .catch(done)
+        })
+
+        it('as object when array', function (done) {
+          const options = {
+            include: [
+              {
+                // from: 'users',
+                service: 'tags',
+                nameAs: 'tags',
+                keyHere: 'tagIds',
+                keyThere: 'id'
+              },
+              {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'post',
+                keyHere: 'postIds',
+                keyThere: 'id',
+                asArray: false
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'after',
+            params: {},
+            result: {
+              data: {
+                id: '11',
+                name: 'Dumb Stuff',
+                postIds: ['111', '222'],
+                tagIds: ['1111', '3333']
+              }
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { result } = context
+            assert(result.data.post, 'post should have been populated')
+            assert(!Array.isArray(result.data.post), 'post should not be an array')
+            assert(result.data.post.id === '111', 'post has correct id')
+            assert(Array.isArray(result.data.tags), 'tags is an array')
+            done()
+          })
+          .catch(done)
+        })
+
+        it('does nothing if some populate data on item does not exist', function (done) {
+          const options = {
+            include: [
+              {
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id'
+              },
+              {
+                service: 'tags',
+                nameAs: 'tags',
+                keyHere: 'tagIds',
+                keyThere: 'id'
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: {
+              id: '22',
+              name: 'Smart Stuff',
+              tagIds: ['1111', '3333']
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(data.tags.length === 2, 'tags have been populated')
+            assert(!data.posts, 'posts have not been populated')
+            done()
+          })
+          .catch(done)
+        })
+
         it('populates from local keys dot notation', function (done) {
           const options = {
             include: [
@@ -1122,6 +1880,158 @@ describe('shallowPopulate hook', function () {
 
     describe('Multiple Record:', function () {
       describe('Single Relationship:', function () {
+        it('as object', function (done) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'posts',
+              nameAs: 'post',
+              keyHere: 'postIds',
+              keyThere: 'id',
+              asArray: false
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'after',
+            params: {},
+            result: {
+              data: [
+                {
+                  id: '11',
+                  name: 'Dumb Stuff',
+                  postIds: ['111', '222']
+                },
+                {
+                  id: '22',
+                  name: 'Smart Stuff',
+                  postIds: '222'
+                },
+                {
+                  id: '33',
+                  name: 'Some Stuff',
+                  postIds: ['111']
+                }
+              ]
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { result } = context
+            assert(result.data[0].post, 'post should have been populated')
+            assert(!Array.isArray(result.data[0].post), 'post should not be an array')
+            assert(result.data[0].post.id === '111', 'post has correct id')
+            assert(result.data[1].post, 'post should have been populated')
+            assert(!Array.isArray(result.data[1].post), 'post should not be an array')
+            assert(result.data[1].post.id === '222', 'post has correct id')
+            done()
+          })
+          .catch(done)
+        })
+
+        it('as object when array', function (done) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'posts',
+              nameAs: 'post',
+              keyHere: 'postIds',
+              keyThere: 'id',
+              asArray: false
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'after',
+            params: {},
+            result: {
+              data: [
+                {
+                  id: '11',
+                  name: 'Dumb Stuff',
+                  postIds: ['111', '222']
+                },
+                {
+                  id: '22',
+                  name: 'Smart Stuff',
+                  postIds: ['222', '111']
+                }
+              ]
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { result } = context
+            assert(result.data[0].post, 'post should have been populated')
+            assert(!Array.isArray(result.data[0].post), 'post should not be an array')
+            assert(result.data[0].post.id === '111', 'post has correct id')
+            assert(result.data[1].post, 'post should have been populated')
+            assert(!Array.isArray(result.data[1].post), 'post should not be an array')
+            assert(result.data[1].post.id === '222', 'post has correct id')
+            done()
+          })
+          .catch(done)
+        })
+
+        it('does nothing if some populate data on item does not exist', function (done) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'tags',
+              nameAs: 'tags',
+              keyHere: 'tagIds',
+              keyThere: 'id'
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: [
+              {
+                id: '22',
+                name: 'Smart Stuff'
+              },
+              {
+                id: '11',
+                name: 'Dumb Stuff'
+              }
+            ]
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(!data[0].tags, 'tags have not been populated')
+            assert(!data[1].tags, 'tags have not been populated')
+            done()
+          })
+          .catch(done)
+        })
+
         it('populates from local keys dot notation', function (done) {
           const options = {
             include: {
@@ -1268,6 +2178,196 @@ describe('shallowPopulate hook', function () {
       })
 
       describe('Multiple Relationship:', function () {
+        it('as object', function (done) {
+          const options = {
+            include: [
+              {
+                // from: 'users',
+                service: 'tags',
+                nameAs: 'tags',
+                keyHere: 'tagIds',
+                keyThere: 'id'
+              },
+              {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'post',
+                keyHere: 'postIds',
+                keyThere: 'id',
+                asArray: false
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'after',
+            params: {},
+            result: {
+              data: [
+                {
+                  id: '11',
+                  name: 'Dumb Stuff',
+                  postIds: '111',
+                  tagIds: ['1111', '3333']
+                },
+                {
+                  id: '22',
+                  name: 'Smart Stuff',
+                  postIds: '222',
+                  tagIds: ['1111']
+                }
+              ]
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { result } = context
+            assert(result.data[0].post, 'post should have been populated')
+            assert(!Array.isArray(result.data[0].post), 'post should not be an array')
+            assert(result.data[0].post.id === '111', 'post has correct id')
+            assert(result.data[0].tags, 'tags should have been populated')
+            assert(Array.isArray(result.data[0].tags), 'tags should be an array')
+
+            assert(result.data[1].post, 'post should have been populated')
+            assert(!Array.isArray(result.data[1].post), 'post should not be an array')
+            assert(result.data[1].post.id === '222', 'post has correct id')
+            assert(result.data[1].tags, 'tags should have been populated')
+            assert(Array.isArray(result.data[1].tags), 'tags should be an array')
+            done()
+          })
+          .catch(done)
+        })
+
+        it('as object when array', function (done) {
+          const options = {
+            include: [
+              {
+                // from: 'users',
+                service: 'tags',
+                nameAs: 'tags',
+                keyHere: 'tagIds',
+                keyThere: 'id'
+              },
+              {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'post',
+                keyHere: 'postIds',
+                keyThere: 'id',
+                asArray: false
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'after',
+            params: {},
+            result: {
+              data: [
+                {
+                  id: '11',
+                  name: 'Dumb Stuff',
+                  postIds: ['111', '222'],
+                  tagIds: ['1111', '3333']
+                },
+                {
+                  id: '22',
+                  name: 'Smart Stuff',
+                  postIds: ['222'],
+                  tagIds: ['1111']
+                }
+              ]
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { result } = context
+            assert(result.data[0].post, 'post should have been populated')
+            assert(!Array.isArray(result.data[0].post), 'post should not be an array')
+            assert(result.data[0].post.id === '111', 'post has correct id')
+            assert(result.data[0].tags, 'tags should have been populated')
+            assert(Array.isArray(result.data[0].tags), 'tags should be an array')
+
+            assert(result.data[1].post, 'post should have been populated')
+            assert(!Array.isArray(result.data[1].post), 'post should not be an array')
+            assert(result.data[1].post.id === '222', 'post has correct id')
+            assert(result.data[1].tags, 'tags should have been populated')
+            assert(Array.isArray(result.data[1].tags), 'tags should be an array')
+            done()
+          })
+          .catch(done)
+        })
+
+        it('does nothing if some populate data on item does not exist', function (done) {
+          const options = {
+            include: [
+              {
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id'
+              },
+              {
+                service: 'tags',
+                nameAs: 'tags',
+                keyHere: 'tagIds',
+                keyThere: 'id'
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'before',
+            params: {},
+            data: [
+              {
+                id: '22',
+                name: 'Smart Stuff',
+                tagIds: ['1111', '3333']
+              },
+              {
+                id: '11',
+                name: 'Dumb Stuff',
+                postsId: ['111', '333']
+              }
+            ]
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+          .then(context => {
+            const { data } = context
+            assert(data[0].tags.length === 2, 'tags have been populated')
+            assert(!data[0].posts, 'posts have not been populated')
+            assert(data[1].posts.length === 2, 'posts have been populated')
+            assert(!data[1].tags, 'tags have not been populated')
+            done()
+          })
+          .catch(done)
+        })
+
         it('populates from local keys dot notation', function (done) {
           const options = {
             include: [
