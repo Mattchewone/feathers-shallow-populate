@@ -35,6 +35,40 @@ app.service('posts').hooks({
 });
 ```
 
+## As Object
+```js
+const { shallowPopulate } = require('feathers-shallow-populate');
+
+const options = {
+  include: {
+    service: 'users',
+    nameAs: 'publisher',
+    keyHere: 'publisherId',
+    keyThere: 'id',
+    asArray: false
+  }
+}
+
+app.service('posts').hooks({
+  after: {
+    all: shallowPopulate(options)
+  }
+});
+
+// result.data
+[
+  {
+    id: 1,
+    title: 'About Timothy',
+    publisherId: 2,
+    publisher: {
+      id: 2,
+      name: 'Timothy'
+    }
+  }
+]
+```
+
 This will go through all the hook.data/hook.result and will create a single query to lookup the tags, it will then populate them back onto the data.
 
 ## License
