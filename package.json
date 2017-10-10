@@ -2,7 +2,7 @@
   "name": "feathers-shallow-populate",
   "description": "Feathers Shallow Populate",
   "version": "0.2.0",
-  "homepage": "https://github.com/https://github.com/Mattchewone/feathers-shallow-populate.git",
+  "homepage": "https://github.com/Mattchewone/feathers-shallow-populate.git",
   "main": "lib/",
   "keywords": [
     "feathers",
@@ -11,7 +11,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git://github.com/https://github.com/Mattchewone/feathers-shallow-populate.git.git"
+    "url": "https://github.com/Mattchewone/feathers-shallow-populate.git"
   },
   "author": {
     "name": "Feathers contributors",
@@ -22,7 +22,7 @@
     "Matt Chaffe <matt@mattchaffe.uk> (https://mattchaffe.uk)"
   ],
   "bugs": {
-    "url": "https://github.com/https://github.com/Mattchewone/feathers-shallow-populate.git/issues"
+    "url": "https://github.com/Mattchewone/feathers-shallow-populate.git/issues"
   },
   "engines": {
     "node": ">= 6.0.0"
