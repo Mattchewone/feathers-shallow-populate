@@ -104,6 +104,37 @@ describe('shallowPopulate hook', function () {
     }
   })
 
+  it('does nothing if we have no data', function (done) {
+    const options = {
+      include: {
+        // from: 'users',
+        service: 'posts',
+        nameAs: 'posts',
+        keyHere: 'postsId',
+        keyThere: 'id'
+      }
+    }
+
+    const context = {
+      method: 'create',
+      type: 'after',
+      params: {},
+      result: {
+        data: []
+      }
+    }
+
+    const shallowPopulate = makePopulate(options)
+
+    shallowPopulate(context)
+    .then(response => {
+      const { result } = response
+      assert.deepEqual(result.data, context.result.data, 'data should not be touched')
+      done()
+    })
+    .catch(done)
+  })
+
   describe('Before Hook:', function () {
     it('does nothing when data is empty', function (done) {
       const options = {
