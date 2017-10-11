@@ -17,7 +17,7 @@ npm install feathers-shallow-populate --save
 Here's an example of using `feathers-shallow-populate`.
 
 ```js
-const { shallowPopulate } = require('feathers-shallow-populate');
+const { shallowPopulate } = require('feathers-shallow-populate')
 
 const options = {
   include: {
@@ -35,9 +35,67 @@ app.service('posts').hooks({
 });
 ```
 
+## Multiple Populates
+```js
+const { shallowPopulate } = require('feathers-shallow-populate')
+
+const options = {
+  include: [
+    {
+      service: 'tags',
+      nameAs: 'tags',
+      keyHere: 'tagIds',
+      keyThere: '_id'
+    },
+    {
+      service: 'comments',
+      nameAs: 'comments',
+      keyHere: 'commentIds',
+      keyThere: '_id'
+    }
+  ]
+}
+
+app.service('posts').hooks({
+  after: {
+    all: shallowPopulate(options)
+  }
+});
+
+// result.data
+[
+  {
+    id: 1,
+    title: 'About Timothy',
+    tagIds: [1, 2]
+    tags: [
+      {
+        id: 1,
+        name: 'tag 1'
+      },
+      {
+        id: 2,
+        name: 'tag 2'
+      }
+    ],
+    commentIds: [3, 5],
+    comments: [
+      {
+        id: 3,
+        title: 'My first comment'
+      },
+      {
+        id: 5,
+        title: 'Another comment'
+      }
+    ]
+  }
+]
+```
+
 ## As Object
 ```js
-const { shallowPopulate } = require('feathers-shallow-populate');
+const { shallowPopulate } = require('feathers-shallow-populate')
 
 const options = {
   include: {
