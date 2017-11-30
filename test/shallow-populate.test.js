@@ -104,6 +104,50 @@ describe('shallowPopulate hook', function () {
     }
   })
 
+  it('can pass in custom params for lookup', function (done) {
+    const options = {
+      include: {
+        // from: 'users',
+        service: 'posts',
+        nameAs: 'posts',
+        keyHere: 'postsId',
+        keyThere: 'id',
+        params: { fromCommentsPopulate: true }
+      }
+    }
+
+    const context = {
+      method: 'create',
+      type: 'after',
+      app: {
+        service () {
+          return {
+            find (params = {}) {
+              assert(params.fromCommentsPopulate === true, 'we have a custom param')
+              return []
+            }
+          }
+        }
+      },
+      params: {},
+      result: {
+        id: '11',
+        name: 'Dumb Stuff',
+        meta: {
+          postsId: ['111', '222', '333']
+        }
+      }
+    }
+
+    const shallowPopulate = makePopulate(options)
+
+    shallowPopulate(context)
+    .then(response => {
+      done()
+    })
+    .catch(done)
+  })
+
   it('does nothing if we have no data', function (done) {
     const options = {
       include: {
