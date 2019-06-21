@@ -1,7 +1,7 @@
 const assert = require('assert')
 const { shallowPopulate: makePopulate } = require('../lib/index')
 const memory = require('feathers-memory')
-const sift = require('sift')
+const sift = require('sift').default
 
 const services = {
   posts: memory({
@@ -64,8 +64,8 @@ describe('shallowPopulate hook', function () {
     try {
       const shallowPopulate = makePopulate()
       shallowPopulate(context)
-      .then(done)
-      .catch(done)
+        .then(done)
+        .catch(done)
     } catch (error) {
       assert(error.message === 'shallowPopulate hook: You must provide one or more relationships in the `include` option.', 'threw correct error message')
       done()
@@ -96,8 +96,8 @@ describe('shallowPopulate hook', function () {
     try {
       const shallowPopulate = makePopulate(options)
       shallowPopulate(context)
-      .then(done)
-      .catch(done)
+        .then(done)
+        .catch(done)
     } catch (error) {
       assert(error.message === 'shallowPopulate hook: Every `include` must contain `service`, `nameAs`, `keyHere`, and `keyThere` properties', 'error has correct message')
       done()
@@ -142,10 +142,10 @@ describe('shallowPopulate hook', function () {
     const shallowPopulate = makePopulate(options)
 
     shallowPopulate(context)
-    .then(response => {
-      done()
-    })
-    .catch(done)
+      .then(response => {
+        done()
+      })
+      .catch(done)
   })
 
   it('does nothing if we have no data', function (done) {
@@ -171,12 +171,12 @@ describe('shallowPopulate hook', function () {
     const shallowPopulate = makePopulate(options)
 
     shallowPopulate(context)
-    .then(response => {
-      const { result } = response
-      assert.deepEqual(result.data, context.result.data, 'data should not be touched')
-      done()
-    })
-    .catch(done)
+      .then(response => {
+        const { result } = response
+        assert.deepStrictEqual(result.data, context.result.data, 'data should not be touched')
+        done()
+      })
+      .catch(done)
   })
 
   describe('Before Hook:', function () {
@@ -206,12 +206,12 @@ describe('shallowPopulate hook', function () {
       const shallowPopulate = makePopulate(options)
 
       shallowPopulate(context)
-      .then(response => {
-        const { data } = response
-        assert.deepEqual(data, context.data, 'data should not be touched')
-        done()
-      })
-      .catch(done)
+        .then(response => {
+          const { data } = response
+          assert.deepStrictEqual(data, context.data, 'data should not be touched')
+          done()
+        })
+        .catch(done)
     })
 
     describe('Single Record:', function () {
@@ -246,14 +246,14 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data.post, 'post should have been populated')
-            assert(!Array.isArray(data.post), 'post should not be an array')
-            assert(data.post.id === '111', 'post has correct id')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data.post, 'post should have been populated')
+              assert(!Array.isArray(data.post), 'post should not be an array')
+              assert(data.post.id === '111', 'post has correct id')
+              done()
+            })
+            .catch(done)
         })
 
         it('as object when array', function (done) {
@@ -286,14 +286,14 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data.post, 'post should have been populated')
-            assert(!Array.isArray(data.post), 'post should not be an array')
-            assert(data.post.id === '111', 'post has correct id')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data.post, 'post should have been populated')
+              assert(!Array.isArray(data.post), 'post should not be an array')
+              assert(data.post.id === '111', 'post has correct id')
+              done()
+            })
+            .catch(done)
         })
 
         it('does nothing if no populate data on item', function (done) {
@@ -324,12 +324,12 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(!data.posts, 'posts should have not been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(!data.posts, 'posts should have not been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from local keys dot notation', function (done) {
@@ -363,12 +363,12 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data.meta.posts.length, 'posts should have been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data.meta.posts.length, 'posts should have been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from local keys', function (done) {
@@ -400,12 +400,12 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data.posts.length, 'posts should have been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data.posts.length, 'posts should have been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it.skip('populates empty nameAs property if no relatedItems', function (done) {
@@ -436,12 +436,12 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data.posts, 'posts should have been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data.posts, 'posts should have been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from foreign keys', function (done) {
@@ -472,12 +472,12 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data.users, 'should have users property')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data.users, 'should have users property')
+              done()
+            })
+            .catch(done)
         })
 
         it.skip('handles missing _id on create', function (done) {})
@@ -524,15 +524,15 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data.post, 'post should have been populated')
-            assert(!Array.isArray(data.post), 'post should not be an array')
-            assert(data.post.id === '111', 'post has correct id')
-            assert(Array.isArray(data.tags), 'tags is an array')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data.post, 'post should have been populated')
+              assert(!Array.isArray(data.post), 'post should not be an array')
+              assert(data.post.id === '111', 'post has correct id')
+              assert(Array.isArray(data.tags), 'tags is an array')
+              done()
+            })
+            .catch(done)
         })
 
         it('as object when array', function (done) {
@@ -575,15 +575,15 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data.post, 'post should have been populated')
-            assert(!Array.isArray(data.post), 'post should not be an array')
-            assert(data.post.id === '111', 'post has correct id')
-            assert(Array.isArray(data.tags), 'tags is an array')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data.post, 'post should have been populated')
+              assert(!Array.isArray(data.post), 'post should not be an array')
+              assert(data.post.id === '111', 'post has correct id')
+              assert(Array.isArray(data.tags), 'tags is an array')
+              done()
+            })
+            .catch(done)
         })
 
         it('does nothing if some populate data on item does not exist', function (done) {
@@ -624,13 +624,13 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(!data.posts, 'posts should have not been populated')
-            assert(data.tags.length === 2, 'tags have been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(!data.posts, 'posts should have not been populated')
+              assert(data.tags.length === 2, 'tags have been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from local keys dot notation', function (done) {
@@ -674,13 +674,13 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data.meta.posts.length, 'posts should have been populated')
-            assert(data.meta.tags.length, 'posts should have been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data.meta.posts.length, 'posts should have been populated')
+              assert(data.meta.tags.length, 'posts should have been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from local keys', function (done) {
@@ -722,12 +722,12 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data.posts.length, 'posts should have been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data.posts.length, 'posts should have been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from foreign keys', function (done) {
@@ -765,13 +765,13 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data.users.length === 1, 'data should have correct users data')
-            assert(data.comments.length === 2, 'data should have correct comments data')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data.users.length === 1, 'data should have correct users data')
+              assert(data.comments.length === 2, 'data should have correct comments data')
+              done()
+            })
+            .catch(done)
         })
 
         it.skip('handles missing _id on create', function (done) {})
@@ -822,17 +822,17 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data[0].post, 'post should have been populated')
-            assert(!Array.isArray(data[0].post), 'post should not be an array')
-            assert(data[0].post.id === '111', 'post has correct id')
-            assert(data[1].post, 'post should have been populated')
-            assert(!Array.isArray(data[1].post), 'post should not be an array')
-            assert(data[1].post.id === '222', 'post has correct id')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data[0].post, 'post should have been populated')
+              assert(!Array.isArray(data[0].post), 'post should not be an array')
+              assert(data[0].post.id === '111', 'post has correct id')
+              assert(data[1].post, 'post should have been populated')
+              assert(!Array.isArray(data[1].post), 'post should not be an array')
+              assert(data[1].post.id === '222', 'post has correct id')
+              done()
+            })
+            .catch(done)
         })
 
         it('as object when array', function (done) {
@@ -872,17 +872,17 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data[0].post, 'post should have been populated')
-            assert(!Array.isArray(data[0].post), 'post should not be an array')
-            assert(data[0].post.id === '111', 'post has correct id')
-            assert(data[1].post, 'post should have been populated')
-            assert(!Array.isArray(data[1].post), 'post should not be an array')
-            assert(data[1].post.id === '222', 'post has correct id')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data[0].post, 'post should have been populated')
+              assert(!Array.isArray(data[0].post), 'post should not be an array')
+              assert(data[0].post.id === '111', 'post has correct id')
+              assert(data[1].post, 'post should have been populated')
+              assert(!Array.isArray(data[1].post), 'post should not be an array')
+              assert(data[1].post.id === '222', 'post has correct id')
+              done()
+            })
+            .catch(done)
         })
 
         it('does nothing if some populate data on item does not exist', function (done) {
@@ -920,13 +920,13 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data[0].tags.length === 2, 'tags have been populated')
-            assert(!data[1].tags, 'tags have not been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data[0].tags.length === 2, 'tags have been populated')
+              assert(!data[1].tags, 'tags have not been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from local keys dot notation', function (done) {
@@ -968,13 +968,13 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data[0].meta.posts.length === 2, 'data[0] posts should have been populated')
-            assert(data[1].meta.posts.length === 3, 'data[0] posts should have been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data[0].meta.posts.length === 2, 'data[0] posts should have been populated')
+              assert(data[1].meta.posts.length === 3, 'data[0] posts should have been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from local keys', function (done) {
@@ -1013,15 +1013,15 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
+            .then(context => {
+              const { data } = context
 
-            assert(data[0].posts.length === 2, 'data[0] should have correct posts data')
-            assert(data[1].posts.length === 1, 'data[1] should have correct posts data')
+              assert(data[0].posts.length === 2, 'data[0] should have correct posts data')
+              assert(data[1].posts.length === 1, 'data[1] should have correct posts data')
 
-            done()
-          })
-          .catch(done)
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from foreign keys', function (done) {
@@ -1058,14 +1058,14 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            data.forEach(item => {
-              assert(item.users, 'should have users property')
+            .then(context => {
+              const { data } = context
+              data.forEach(item => {
+                assert(item.users, 'should have users property')
+              })
+              done()
             })
-            done()
-          })
-          .catch(done)
+            .catch(done)
         })
 
         it.skip('handles missing _id on create', function (done) {})
@@ -1120,22 +1120,22 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data[0].post, 'post should have been populated')
-            assert(!Array.isArray(data[0].post), 'post should not be an array')
-            assert(data[0].post.id === '111', 'post has correct id')
-            assert(data[0].tags, 'tags should have been populated')
-            assert(Array.isArray(data[0].tags), 'tags should be an array')
+            .then(context => {
+              const { data } = context
+              assert(data[0].post, 'post should have been populated')
+              assert(!Array.isArray(data[0].post), 'post should not be an array')
+              assert(data[0].post.id === '111', 'post has correct id')
+              assert(data[0].tags, 'tags should have been populated')
+              assert(Array.isArray(data[0].tags), 'tags should be an array')
 
-            assert(data[1].post, 'post should have been populated')
-            assert(!Array.isArray(data[1].post), 'post should not be an array')
-            assert(data[1].post.id === '222', 'post has correct id')
-            assert(data[1].tags, 'tags should have been populated')
-            assert(Array.isArray(data[1].tags), 'tags should be an array')
-            done()
-          })
-          .catch(done)
+              assert(data[1].post, 'post should have been populated')
+              assert(!Array.isArray(data[1].post), 'post should not be an array')
+              assert(data[1].post.id === '222', 'post has correct id')
+              assert(data[1].tags, 'tags should have been populated')
+              assert(Array.isArray(data[1].tags), 'tags should be an array')
+              done()
+            })
+            .catch(done)
         })
 
         it('as object when array', function (done) {
@@ -1186,22 +1186,22 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data[0].post, 'post should have been populated')
-            assert(!Array.isArray(data[0].post), 'post should not be an array')
-            assert(data[0].post.id === '111', 'post has correct id')
-            assert(data[0].tags, 'tags should have been populated')
-            assert(Array.isArray(data[0].tags), 'tags should be an array')
+            .then(context => {
+              const { data } = context
+              assert(data[0].post, 'post should have been populated')
+              assert(!Array.isArray(data[0].post), 'post should not be an array')
+              assert(data[0].post.id === '111', 'post has correct id')
+              assert(data[0].tags, 'tags should have been populated')
+              assert(Array.isArray(data[0].tags), 'tags should be an array')
 
-            assert(data[1].post, 'post should have been populated')
-            assert(!Array.isArray(data[1].post), 'post should not be an array')
-            assert(data[1].post.id === '222', 'post has correct id')
-            assert(data[1].tags, 'tags should have been populated')
-            assert(Array.isArray(data[1].tags), 'tags should be an array')
-            done()
-          })
-          .catch(done)
+              assert(data[1].post, 'post should have been populated')
+              assert(!Array.isArray(data[1].post), 'post should not be an array')
+              assert(data[1].post.id === '222', 'post has correct id')
+              assert(data[1].tags, 'tags should have been populated')
+              assert(Array.isArray(data[1].tags), 'tags should be an array')
+              done()
+            })
+            .catch(done)
         })
 
         it('does nothing if some populate data on item does not exist', function (done) {
@@ -1249,15 +1249,15 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data[0].posts.length === 3, 'posts have been populated')
-            assert(!data[0].tags, 'tags have not been populated')
-            assert(!data[1].tags, 'tags have not been populated')
-            assert(data[1].posts.length === 2, 'posts have been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data[0].posts.length === 3, 'posts have been populated')
+              assert(!data[0].tags, 'tags have not been populated')
+              assert(!data[1].tags, 'tags have not been populated')
+              assert(data[1].posts.length === 2, 'posts have been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from local keys', function (done) {
@@ -1307,18 +1307,18 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
+            .then(context => {
+              const { data } = context
 
-            assert(data[0].posts.length === 3, 'data[0] should have correct posts data')
-            assert(data[0].tags.length === 2, 'data[0] should have correct tags data')
+              assert(data[0].posts.length === 3, 'data[0] should have correct posts data')
+              assert(data[0].tags.length === 2, 'data[0] should have correct tags data')
 
-            assert(data[1].posts.length === 2, 'data[1] should have correct posts data')
-            assert(data[1].tags.length === 1, 'data[1] should have correct tags data')
+              assert(data[1].posts.length === 2, 'data[1] should have correct posts data')
+              assert(data[1].tags.length === 1, 'data[1] should have correct tags data')
 
-            done()
-          })
-          .catch(done)
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from foreign keys', function (done) {
@@ -1362,18 +1362,18 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
+            .then(context => {
+              const { data } = context
 
-            assert(data[0].users.length === 1, 'data[0] should have correct users data')
-            assert(data[0].comments.length === 2, 'data[0] should have correct comments data')
+              assert(data[0].users.length === 1, 'data[0] should have correct users data')
+              assert(data[0].comments.length === 2, 'data[0] should have correct comments data')
 
-            assert(data[1].users.length === 2, 'data[1] should have correct users data')
-            assert(data[1].comments.length === 1, 'data[1] should have correct comments data')
+              assert(data[1].users.length === 2, 'data[1] should have correct users data')
+              assert(data[1].comments.length === 1, 'data[1] should have correct comments data')
 
-            done()
-          })
-          .catch(done)
+              done()
+            })
+            .catch(done)
         })
 
         it.skip('handles missing _id on create', function (done) {})
@@ -1410,12 +1410,12 @@ describe('shallowPopulate hook', function () {
       const shallowPopulate = makePopulate(options)
 
       shallowPopulate(context)
-      .then(response => {
-        const { result } = response
-        assert.deepEqual(result.data, context.result.data, 'data should not be touched')
-        done()
-      })
-      .catch(done)
+        .then(response => {
+          const { result } = response
+          assert.deepStrictEqual(result.data, context.result.data, 'data should not be touched')
+          done()
+        })
+        .catch(done)
     })
 
     describe('Single Record:', function () {
@@ -1452,14 +1452,14 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            assert(result.data.post, 'post should have been populated')
-            assert(!Array.isArray(result.data.post), 'post should not be an array')
-            assert(result.data.post.id === '111', 'post has correct id')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { result } = context
+              assert(result.data.post, 'post should have been populated')
+              assert(!Array.isArray(result.data.post), 'post should not be an array')
+              assert(result.data.post.id === '111', 'post has correct id')
+              done()
+            })
+            .catch(done)
         })
 
         it('as object when array', function (done) {
@@ -1494,14 +1494,14 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            assert(result.data.post, 'post should have been populated')
-            assert(!Array.isArray(result.data.post), 'post should not be an array')
-            assert(result.data.post.id === '111', 'post has correct id')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { result } = context
+              assert(result.data.post, 'post should have been populated')
+              assert(!Array.isArray(result.data.post), 'post should not be an array')
+              assert(result.data.post.id === '111', 'post has correct id')
+              done()
+            })
+            .catch(done)
         })
 
         it('does nothing if some populate data on item does not exist', function (done) {
@@ -1532,12 +1532,12 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(!data.tags, 'tags have not been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(!data.tags, 'tags have not been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from local keys dot notation', function (done) {
@@ -1571,12 +1571,12 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            assert(result.meta.posts.length === 3, 'posts should have been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { result } = context
+              assert(result.meta.posts.length === 3, 'posts should have been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from local keys', function (done) {
@@ -1608,12 +1608,12 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            assert(result.posts.length, 'posts should have been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { result } = context
+              assert(result.posts.length, 'posts should have been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from foreign keys', function (done) {
@@ -1645,12 +1645,12 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            assert(result.users, 'should have users property')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { result } = context
+              assert(result.users, 'should have users property')
+              done()
+            })
+            .catch(done)
         })
 
         it.skip('handles missing _id on create', function (done) {})
@@ -1699,15 +1699,15 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            assert(result.data.post, 'post should have been populated')
-            assert(!Array.isArray(result.data.post), 'post should not be an array')
-            assert(result.data.post.id === '111', 'post has correct id')
-            assert(Array.isArray(result.data.tags), 'tags is an array')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { result } = context
+              assert(result.data.post, 'post should have been populated')
+              assert(!Array.isArray(result.data.post), 'post should not be an array')
+              assert(result.data.post.id === '111', 'post has correct id')
+              assert(Array.isArray(result.data.tags), 'tags is an array')
+              done()
+            })
+            .catch(done)
         })
 
         it('as object when array', function (done) {
@@ -1752,15 +1752,15 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            assert(result.data.post, 'post should have been populated')
-            assert(!Array.isArray(result.data.post), 'post should not be an array')
-            assert(result.data.post.id === '111', 'post has correct id')
-            assert(Array.isArray(result.data.tags), 'tags is an array')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { result } = context
+              assert(result.data.post, 'post should have been populated')
+              assert(!Array.isArray(result.data.post), 'post should not be an array')
+              assert(result.data.post.id === '111', 'post has correct id')
+              assert(Array.isArray(result.data.tags), 'tags is an array')
+              done()
+            })
+            .catch(done)
         })
 
         it('does nothing if some populate data on item does not exist', function (done) {
@@ -1799,13 +1799,13 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data.tags.length === 2, 'tags have been populated')
-            assert(!data.posts, 'posts have not been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data.tags.length === 2, 'tags have been populated')
+              assert(!data.posts, 'posts have not been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from local keys dot notation', function (done) {
@@ -1847,13 +1847,13 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            assert(result.meta.posts.length === 3, 'posts should have been populated')
-            assert(result.meta.tags.length === 2, 'tags should have been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { result } = context
+              assert(result.meta.posts.length === 3, 'posts should have been populated')
+              assert(result.meta.tags.length === 2, 'tags should have been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from local keys', function (done) {
@@ -1895,12 +1895,12 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            assert(result.posts.length, 'posts should have been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { result } = context
+              assert(result.posts.length, 'posts should have been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from foreign keys', function (done) {
@@ -1938,15 +1938,15 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
+            .then(context => {
+              const { result } = context
 
-            assert(result.users.length === 1, 'result should have correct users data')
-            assert(result.comments.length === 2, 'result should have correct comments data')
+              assert(result.users.length === 1, 'result should have correct users data')
+              assert(result.comments.length === 2, 'result should have correct comments data')
 
-            done()
-          })
-          .catch(done)
+              done()
+            })
+            .catch(done)
         })
 
         it.skip('handles missing _id on create', function (done) {})
@@ -1999,17 +1999,17 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            assert(result.data[0].post, 'post should have been populated')
-            assert(!Array.isArray(result.data[0].post), 'post should not be an array')
-            assert(result.data[0].post.id === '111', 'post has correct id')
-            assert(result.data[1].post, 'post should have been populated')
-            assert(!Array.isArray(result.data[1].post), 'post should not be an array')
-            assert(result.data[1].post.id === '222', 'post has correct id')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { result } = context
+              assert(result.data[0].post, 'post should have been populated')
+              assert(!Array.isArray(result.data[0].post), 'post should not be an array')
+              assert(result.data[0].post.id === '111', 'post has correct id')
+              assert(result.data[1].post, 'post should have been populated')
+              assert(!Array.isArray(result.data[1].post), 'post should not be an array')
+              assert(result.data[1].post.id === '222', 'post has correct id')
+              done()
+            })
+            .catch(done)
         })
 
         it('as object when array', function (done) {
@@ -2051,17 +2051,17 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            assert(result.data[0].post, 'post should have been populated')
-            assert(!Array.isArray(result.data[0].post), 'post should not be an array')
-            assert(result.data[0].post.id === '111', 'post has correct id')
-            assert(result.data[1].post, 'post should have been populated')
-            assert(!Array.isArray(result.data[1].post), 'post should not be an array')
-            assert(result.data[1].post.id === '222', 'post has correct id')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { result } = context
+              assert(result.data[0].post, 'post should have been populated')
+              assert(!Array.isArray(result.data[0].post), 'post should not be an array')
+              assert(result.data[0].post.id === '111', 'post has correct id')
+              assert(result.data[1].post, 'post should have been populated')
+              assert(!Array.isArray(result.data[1].post), 'post should not be an array')
+              assert(result.data[1].post.id === '222', 'post has correct id')
+              done()
+            })
+            .catch(done)
         })
 
         it('does nothing if some populate data on item does not exist', function (done) {
@@ -2098,13 +2098,13 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(!data[0].tags, 'tags have not been populated')
-            assert(!data[1].tags, 'tags have not been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(!data[0].tags, 'tags have not been populated')
+              assert(!data[1].tags, 'tags have not been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from local keys dot notation', function (done) {
@@ -2147,15 +2147,15 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
+            .then(context => {
+              const { result } = context
 
-            assert(result[0].meta.posts.length === 2, 'result[0] should have correct posts data')
-            assert(result[1].meta.posts.length === 1, 'result[1] should have correct posts data')
+              assert(result[0].meta.posts.length === 2, 'result[0] should have correct posts data')
+              assert(result[1].meta.posts.length === 1, 'result[1] should have correct posts data')
 
-            done()
-          })
-          .catch(done)
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from local keys', function (done) {
@@ -2194,15 +2194,15 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
+            .then(context => {
+              const { result } = context
 
-            assert(result[0].posts.length === 2, 'result[0] should have correct posts data')
-            assert(result[1].posts.length === 1, 'result[1] should have correct posts data')
+              assert(result[0].posts.length === 2, 'result[0] should have correct posts data')
+              assert(result[1].posts.length === 1, 'result[1] should have correct posts data')
 
-            done()
-          })
-          .catch(done)
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from foreign keys', function (done) {
@@ -2239,14 +2239,14 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            result.forEach(item => {
-              assert(item.users, 'should have users property')
+            .then(context => {
+              const { result } = context
+              result.forEach(item => {
+                assert(item.users, 'should have users property')
+              })
+              done()
             })
-            done()
-          })
-          .catch(done)
+            .catch(done)
         })
 
         it.skip('handles missing _id on create', function (done) {})
@@ -2303,22 +2303,22 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            assert(result.data[0].post, 'post should have been populated')
-            assert(!Array.isArray(result.data[0].post), 'post should not be an array')
-            assert(result.data[0].post.id === '111', 'post has correct id')
-            assert(result.data[0].tags, 'tags should have been populated')
-            assert(Array.isArray(result.data[0].tags), 'tags should be an array')
+            .then(context => {
+              const { result } = context
+              assert(result.data[0].post, 'post should have been populated')
+              assert(!Array.isArray(result.data[0].post), 'post should not be an array')
+              assert(result.data[0].post.id === '111', 'post has correct id')
+              assert(result.data[0].tags, 'tags should have been populated')
+              assert(Array.isArray(result.data[0].tags), 'tags should be an array')
 
-            assert(result.data[1].post, 'post should have been populated')
-            assert(!Array.isArray(result.data[1].post), 'post should not be an array')
-            assert(result.data[1].post.id === '222', 'post has correct id')
-            assert(result.data[1].tags, 'tags should have been populated')
-            assert(Array.isArray(result.data[1].tags), 'tags should be an array')
-            done()
-          })
-          .catch(done)
+              assert(result.data[1].post, 'post should have been populated')
+              assert(!Array.isArray(result.data[1].post), 'post should not be an array')
+              assert(result.data[1].post.id === '222', 'post has correct id')
+              assert(result.data[1].tags, 'tags should have been populated')
+              assert(Array.isArray(result.data[1].tags), 'tags should be an array')
+              done()
+            })
+            .catch(done)
         })
 
         it('as object when array', function (done) {
@@ -2371,22 +2371,22 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            assert(result.data[0].post, 'post should have been populated')
-            assert(!Array.isArray(result.data[0].post), 'post should not be an array')
-            assert(result.data[0].post.id === '111', 'post has correct id')
-            assert(result.data[0].tags, 'tags should have been populated')
-            assert(Array.isArray(result.data[0].tags), 'tags should be an array')
+            .then(context => {
+              const { result } = context
+              assert(result.data[0].post, 'post should have been populated')
+              assert(!Array.isArray(result.data[0].post), 'post should not be an array')
+              assert(result.data[0].post.id === '111', 'post has correct id')
+              assert(result.data[0].tags, 'tags should have been populated')
+              assert(Array.isArray(result.data[0].tags), 'tags should be an array')
 
-            assert(result.data[1].post, 'post should have been populated')
-            assert(!Array.isArray(result.data[1].post), 'post should not be an array')
-            assert(result.data[1].post.id === '222', 'post has correct id')
-            assert(result.data[1].tags, 'tags should have been populated')
-            assert(Array.isArray(result.data[1].tags), 'tags should be an array')
-            done()
-          })
-          .catch(done)
+              assert(result.data[1].post, 'post should have been populated')
+              assert(!Array.isArray(result.data[1].post), 'post should not be an array')
+              assert(result.data[1].post.id === '222', 'post has correct id')
+              assert(result.data[1].tags, 'tags should have been populated')
+              assert(Array.isArray(result.data[1].tags), 'tags should be an array')
+              done()
+            })
+            .catch(done)
         })
 
         it('does nothing if some populate data on item does not exist', function (done) {
@@ -2432,15 +2432,15 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { data } = context
-            assert(data[0].tags.length === 2, 'tags have been populated')
-            assert(!data[0].posts, 'posts have not been populated')
-            assert(data[1].posts.length === 2, 'posts have been populated')
-            assert(!data[1].tags, 'tags have not been populated')
-            done()
-          })
-          .catch(done)
+            .then(context => {
+              const { data } = context
+              assert(data[0].tags.length === 2, 'tags have been populated')
+              assert(!data[0].posts, 'posts have not been populated')
+              assert(data[1].posts.length === 2, 'posts have been populated')
+              assert(!data[1].tags, 'tags have not been populated')
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from local keys dot notation', function (done) {
@@ -2494,19 +2494,19 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            const { data } = result
+            .then(context => {
+              const { result } = context
+              const { data } = result
 
-            assert(data[0].meta.posts.length === 3, 'result[0] should have correct posts data')
-            assert(data[0].meta.tags.length === 2, 'result[0] should have correct tags data')
+              assert(data[0].meta.posts.length === 3, 'result[0] should have correct posts data')
+              assert(data[0].meta.tags.length === 2, 'result[0] should have correct tags data')
 
-            assert(data[1].meta.posts.length === 2, 'result[1] should have correct posts data')
-            assert(data[1].meta.tags.length === 1, 'result[1] should have correct tags data')
+              assert(data[1].meta.posts.length === 2, 'result[1] should have correct posts data')
+              assert(data[1].meta.tags.length === 1, 'result[1] should have correct tags data')
 
-            done()
-          })
-          .catch(done)
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from local keys', function (done) {
@@ -2558,19 +2558,19 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
-            const { data } = result
+            .then(context => {
+              const { result } = context
+              const { data } = result
 
-            assert(data[0].posts.length === 3, 'result[0] should have correct posts data')
-            assert(data[0].tags.length === 2, 'result[0] should have correct tags data')
+              assert(data[0].posts.length === 3, 'result[0] should have correct posts data')
+              assert(data[0].tags.length === 2, 'result[0] should have correct tags data')
 
-            assert(data[1].posts.length === 2, 'result[1] should have correct posts data')
-            assert(data[1].tags.length === 1, 'result[1] should have correct tags data')
+              assert(data[1].posts.length === 2, 'result[1] should have correct posts data')
+              assert(data[1].tags.length === 1, 'result[1] should have correct tags data')
 
-            done()
-          })
-          .catch(done)
+              done()
+            })
+            .catch(done)
         })
 
         it('populates from foreign keys', function (done) {
@@ -2614,18 +2614,18 @@ describe('shallowPopulate hook', function () {
           const shallowPopulate = makePopulate(options)
 
           shallowPopulate(context)
-          .then(context => {
-            const { result } = context
+            .then(context => {
+              const { result } = context
 
-            assert(result[0].users.length === 1, 'result[0] should have correct users data')
-            assert(result[0].comments.length === 2, 'result[0] should have correct comments data')
+              assert(result[0].users.length === 1, 'result[0] should have correct users data')
+              assert(result[0].comments.length === 2, 'result[0] should have correct comments data')
 
-            assert(result[1].users.length === 2, 'result[1] should have correct users data')
-            assert(result[1].comments.length === 1, 'result[1] should have correct comments data')
+              assert(result[1].users.length === 2, 'result[1] should have correct users data')
+              assert(result[1].comments.length === 1, 'result[1] should have correct comments data')
 
-            done()
-          })
-          .catch(done)
+              done()
+            })
+            .catch(done)
         })
 
         it.skip('handles missing _id on create', function (done) {})
