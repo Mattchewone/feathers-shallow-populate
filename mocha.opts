@@ -1,1 +1,1 @@
---recursive test/
+-u bdd --recursive --exit test/
