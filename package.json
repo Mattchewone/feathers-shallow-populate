@@ -53,7 +53,7 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "feathers-memory": "^1.2.1",
+    "feathers-memory": "^4.0.0",
     "istanbul": "^1.1.0-alpha.1",
     "mocha": "^3.5.3",
     "sift": "^5.0.0",

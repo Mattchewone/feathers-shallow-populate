@@ -25,6 +25,23 @@ const services = {
       }
     }
   }),
+  taskSets: memory({
+    store: {
+      'ts1': { id: 'ts1', name: 'Task Set 1' },
+      'ts2': { id: 'ts2', name: 'Task Set 2' },
+      'ts3': { id: 'ts3', name: 'Task Set 3' }
+    }
+  }),
+  tasks: memory({
+    store: {
+      'task1': { id: 'task1', name: 'Task 1 - belongs with TaskSet1', taskSet: { taskSetId: 'ts1' } },
+      'task2': { id: 'task2', name: 'Task 2 - belongs with TaskSet2', taskSet: { taskSetId: 'ts2' } },
+      'task3': { id: 'task3', name: 'Task 3 - belongs with TaskSet2', taskSet: { taskSetId: 'ts2' } },
+      'task4': { id: 'task4', name: 'Task 3 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
+      'task5': { id: 'task5', name: 'Task 3 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
+      'task6': { id: 'task6', name: 'Task 3 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } }
+    }
+  }),
   comments: memory({
     store: {
       '11111': { id: '11111', name: 'The Best Sounds This Summer', postsId: ['222'] },
@@ -2626,6 +2643,94 @@ describe('shallowPopulate hook', function () {
             done()
           })
           .catch(done)
+        })
+
+        it('populates from nested foreign keys', function (done) {
+          const options = {
+            include: [
+              {
+                service: 'tasks',
+                nameAs: 'tasks',
+                keyHere: 'id',
+                keyThere: 'taskSet.taskSetId'
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'after',
+            params: {},
+            result: [
+              { id: 'ts1', name: 'Task Set 1' },
+              { id: 'ts2', name: 'Task Set 2' },
+              { id: 'ts3', name: 'Task Set 3' }
+            ]
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+            .then(context => {
+              const { result } = context
+
+              assert(result[0].tasks.length === 1, 'result[0] should have correct users data')
+              assert(result[1].tasks.length === 2, 'result[1] should have correct comments data')
+              assert(result[2].tasks.length === 3, 'result[2] should have correct comments data')
+
+              done()
+            })
+            .catch(done)
+        })
+
+        it('populates from nested keyHere', function (done) {
+          const options = {
+            include: [
+              {
+                service: 'taskSets',
+                nameAs: 'taskSetData',
+                keyHere: 'taskSet.taskSetId',
+                keyThere: 'id',
+                asArray: false
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'after',
+            params: {},
+            result: [
+              { id: 'task1', name: 'Task 1 - belongs with TaskSet1', taskSet: { taskSetId: 'ts1' } },
+              { id: 'task2', name: 'Task 2 - belongs with TaskSet2', taskSet: { taskSetId: 'ts2' } },
+              { id: 'task3', name: 'Task 3 - belongs with TaskSet2', taskSet: { taskSetId: 'ts2' } },
+              { id: 'task4', name: 'Task 3 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
+              { id: 'task5', name: 'Task 3 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
+              { id: 'task6', name: 'Task 3 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } }
+            ]
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+            .then(context => {
+              const { result } = context
+
+              result.forEach(r => {
+                assert.equal(r.taskSet.taskSetId, r.taskSetData.id, 'got correct record')
+              })
+
+              done()
+            })
+            .catch(done)
         })
 
         it.skip('handles missing _id on create', function (done) {})
