@@ -1,7 +1,7 @@
 language: node_js
 node_js:
   - 'node'
-  - '6'
+  - '8'
 addons:
   code_climate:
     repo_token: 'your repo token'
