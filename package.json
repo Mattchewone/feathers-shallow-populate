@@ -55,7 +55,7 @@
     "chai": "^4.2.0",
     "feathers-memory": "^4.0.0",
     "istanbul": "^1.1.0-alpha.1",
-    "mocha": "^3.5.3",
+    "mocha": "^6.1.4",
     "sift": "^8.5.0",
     "standard": "^10.0.3"
   }
