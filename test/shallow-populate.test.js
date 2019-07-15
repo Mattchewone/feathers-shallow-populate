@@ -1,7 +1,7 @@
 const assert = require('assert')
 const { shallowPopulate: makePopulate } = require('../lib/index')
 const memory = require('feathers-memory')
-const sift = require('sift')
+const sift = require('sift').default
 
 const services = {
   posts: memory({
