@@ -25,7 +25,7 @@
     "url": "https://github.com/Mattchewone/feathers-shallow-populate.git/issues"
   },
   "engines": {
-    "node": ">= 6.0.0"
+    "node": ">= 8.0.0"
   },
   "scripts": {
     "publish": "git push origin --tags && npm run changelog && git push origin",
@@ -48,15 +48,15 @@
     "lib": "lib"
   },
   "dependencies": {
-    "assert": "^1.4.1",
-    "feathers-hooks-common": "^3.7.3"
+    "assert": "^1.5.0",
+    "feathers-hooks-common": "^3.10.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "feathers-memory": "^1.2.1",
+    "feathers-memory": "^4.0.0",
     "istanbul": "^1.1.0-alpha.1",
     "mocha": "^3.5.3",
-    "sift": "^5.0.0",
+    "sift": "^8.5.0",
     "standard": "^10.0.3"
   }
 }
