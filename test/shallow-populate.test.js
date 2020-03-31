@@ -62,6 +62,27 @@ const services = {
       2222: { id: '2222', name: 'Trumpets' },
       3333: { id: '3333', name: 'Drums' }
     }
+  }),
+  orgs: memory({
+    store: {
+      org1: { id: 'org1', name: 'Southern Utah', memberCount: 21 },
+      org2: { id: 'org2', name: 'Northern Utah', memberCount: 99 },
+    }
+  }),
+  environments: memory({
+    store: {
+      env1: {
+        id: 'env1', name: 'Bryce Canyon National Park', orgs: [
+          { orgId: 'org1', orgName: 'Southern Utah' },
+          { orgId: 'org2', orgName: 'Northern Utah' },
+        ]
+      },
+      env2: { 
+        id: 'env2', name: 'Zion National Park', orgs: [
+          { orgId: 'org1', orgName: 'Southern Utah' }
+        ]
+      },
+    }
   })
 }
 
@@ -2726,6 +2747,53 @@ describe('shallowPopulate hook', function () {
 
               result.forEach(r => {
                 assert.strictEqual(r.taskSet.taskSetId, r.taskSetData.id, 'got correct record')
+              })
+
+              done()
+            })
+            .catch(done)
+        })
+
+        it('populates from nested array', function (done) {
+          const options = {
+            include: [
+              {
+                service: 'environments',
+                nameAs: 'envs',
+                keyHere: 'id',
+                keyThere: 'orgs.orgId',
+                asArray: true
+              }
+            ]
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type: 'after',
+            params: {},
+            result: [
+              { id: 'org1', name: 'Southern Utah', memberCount: 21 },
+              { id: 'org2', name: 'Northern Utah', memberCount: 99 },
+            ]
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          shallowPopulate(context)
+            .then(context => {
+              const { result } = context
+
+              result.forEach(r => {
+                if (r.id === 'org1') {
+                  assert(r.envs[0].orgs[0].orgId === 'org1', 'should have at least one environment populated')
+                }
+                if (r.id === 'org2') {
+                  assert(r.envs.length === 0, 'org2 should not have any environments')
+                }
               })
 
               done()
