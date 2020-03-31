@@ -6,8 +6,7 @@
 
 > Feathers Shallow Populate
 
-# Deprecated
-Please look to use the much more configurable `fastJoin` https://feathers-plus.github.io/v1/feathers-hooks-common/#fastjoin
+The fastest FeathersJS hook for populating relational data.
 
 ## Installation
 
