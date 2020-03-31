@@ -49,14 +49,15 @@
   },
   "dependencies": {
     "assert": "^2.0.0",
-    "feathers-hooks-common": "^4.20.7"
+    "feathers-hooks-common": "^5.0.2",
+    "lodash": "^4.17.15"
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "feathers-memory": "^4.0.0",
+    "feathers-memory": "^4.1.0",
     "istanbul": "^0.4.5",
     "mocha": "^6.1.4",
-    "sift": "^8.5.0",
+    "sift": "^11.0.10",
     "standard": "^13.0.2"
   }
 }
