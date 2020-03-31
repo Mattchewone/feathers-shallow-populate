@@ -85,6 +85,13 @@ const services = {
         orgs: [
           { orgId: 'org1', orgName: 'Southern Utah' }
         ]
+      },
+      env3: {
+        id: 'env2',
+        name: 'Canyonlands National Park',
+        orgs: [
+          { orgId: 'org2', orgName: 'Northern Utah' }
+        ]
       }
     }
   })
@@ -2793,10 +2800,10 @@ describe('shallowPopulate hook', function () {
 
               result.forEach(r => {
                 if (r.id === 'org1') {
+                  assert(r.envs.length === 2, 'org1 should have two environments')
                   assert(r.envs[0].orgs[0].orgId === 'org1', 'should have at least one environment populated')
                 } else if (r.id === 'org2') {
-                  console.log(r)
-                  assert(r.envs.length === 0, 'org2 should not have any environments')
+                  assert(r.envs.length === 2, 'org2 should have two environments')
                 }
               })
 
