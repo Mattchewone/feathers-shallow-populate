@@ -66,22 +66,26 @@ const services = {
   orgs: memory({
     store: {
       org1: { id: 'org1', name: 'Southern Utah', memberCount: 21 },
-      org2: { id: 'org2', name: 'Northern Utah', memberCount: 99 },
+      org2: { id: 'org2', name: 'Northern Utah', memberCount: 99 }
     }
   }),
   environments: memory({
     store: {
       env1: {
-        id: 'env1', name: 'Bryce Canyon National Park', orgs: [
+        id: 'env1',
+        name: 'Bryce Canyon National Park',
+        orgs: [
           { orgId: 'org1', orgName: 'Southern Utah' },
-          { orgId: 'org2', orgName: 'Northern Utah' },
+          { orgId: 'org2', orgName: 'Northern Utah' }
         ]
       },
-      env2: { 
-        id: 'env2', name: 'Zion National Park', orgs: [
+      env2: {
+        id: 'env2',
+        name: 'Zion National Park',
+        orgs: [
           { orgId: 'org1', orgName: 'Southern Utah' }
         ]
-      },
+      }
     }
   })
 }
@@ -2777,7 +2781,7 @@ describe('shallowPopulate hook', function () {
             params: {},
             result: [
               { id: 'org1', name: 'Southern Utah', memberCount: 21 },
-              { id: 'org2', name: 'Northern Utah', memberCount: 99 },
+              { id: 'org2', name: 'Northern Utah', memberCount: 99 }
             ]
           }
 
@@ -2790,8 +2794,8 @@ describe('shallowPopulate hook', function () {
               result.forEach(r => {
                 if (r.id === 'org1') {
                   assert(r.envs[0].orgs[0].orgId === 'org1', 'should have at least one environment populated')
-                }
-                if (r.id === 'org2') {
+                } else if (r.id === 'org2') {
+                  console.log(r)
                   assert(r.envs.length === 0, 'org2 should not have any environments')
                 }
               })
