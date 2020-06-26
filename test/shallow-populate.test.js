@@ -8,14 +8,18 @@ const services = {
     store: {
       111: { id: '111', name: 'My Monkey and Me' },
       222: { id: '222', name: 'I forgot why I love you' },
-      333: { id: '333', name: 'If I were a banana...' }
+      333: { id: '333', name: 'If I were a banana...' },
+      444: { id: 444, name: 'One, two, three, one, two, three, drink' },
+      555: { id: 555, name: 'Im gonna live like tomorrow doesnt exist' },
+      666: { id: 666, name: 'I feel the love, feel the love' }
     }
   }),
   users: memory({
     store: {
       11: { id: '11', name: 'Joe Bloggs', postsId: ['111'] },
       22: { id: '22', name: 'Jane Bloggs', postsId: '333' },
-      33: { id: '33', name: 'John Smith', postsId: ['111', '222'] }
+      33: { id: '33', name: 'John Smith', postsId: ['111', '222'] },
+      44: { id: 44, name: 'Muhammad Li', postsId: [444, '555'] }
     },
     matcher: query => {
       return items => {
@@ -29,7 +33,10 @@ const services = {
     store: {
       ts1: { id: 'ts1', name: 'Task Set 1' },
       ts2: { id: 'ts2', name: 'Task Set 2' },
-      ts3: { id: 'ts3', name: 'Task Set 3' }
+      ts3: { id: 'ts3', name: 'Task Set 3' },
+      4: { id: 4, name: 'Task Set 4' },
+      5: { id: 5, name: 'Task Set 5' },
+      ts6: { id: 'ts6', name: 'Task Set 6' }
     }
   }),
   tasks: memory({
@@ -37,16 +44,20 @@ const services = {
       task1: { id: 'task1', name: 'Task 1 - belongs with TaskSet1', taskSet: { taskSetId: 'ts1' } },
       task2: { id: 'task2', name: 'Task 2 - belongs with TaskSet2', taskSet: { taskSetId: 'ts2' } },
       task3: { id: 'task3', name: 'Task 3 - belongs with TaskSet2', taskSet: { taskSetId: 'ts2' } },
-      task4: { id: 'task4', name: 'Task 3 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
-      task5: { id: 'task5', name: 'Task 3 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
-      task6: { id: 'task6', name: 'Task 3 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } }
+      task4: { id: 'task4', name: 'Task 4 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
+      task5: { id: 'task5', name: 'Task 5 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
+      task6: { id: 'task6', name: 'Task 6 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
+      7: { id: 7, name: 'Task 7 - belongs with TaskSet4', taskSet: { taskSetId: 4 } },
+      task8: { id: 'task8', name: 'Task 8 - belongs with TaskSet5', taskSet: { taskSetId: 5 } },
+      9: { id: 9, name: 'Task 9 - belongs with TaskSet6', taskSet: { taskSetId: 'ts6' } }
     }
   }),
   comments: memory({
     store: {
       11111: { id: '11111', name: 'The Best Sounds This Summer', postsId: ['222'] },
       22222: { id: '22222', name: 'Chillstation', postsId: ['333'] },
-      33333: { id: '33333', name: 'Hard Hitting Bass', postsId: ['111', '222', '333'] }
+      33333: { id: '33333', name: 'Hard Hitting Bass', postsId: ['111', '222', '333'] },
+      44444: { id: 44444, name: 'As long as skies are blue', postsId: ['111', 444, '555'] }
     },
     matcher: query => {
       return items => {
@@ -60,13 +71,17 @@ const services = {
     store: {
       1111: { id: '1111', name: 'Trombones' },
       2222: { id: '2222', name: 'Trumpets' },
-      3333: { id: '3333', name: 'Drums' }
+      3333: { id: '3333', name: 'Drums' },
+      4444: { id: 4444, name: 'Guitars' },
+      5555: { id: 5555, name: 'Violins' }
     }
   }),
   orgs: memory({
     store: {
       org1: { id: 'org1', name: 'Southern Utah', memberCount: 21 },
-      org2: { id: 'org2', name: 'Northern Utah', memberCount: 99 }
+      org2: { id: 'org2', name: 'Northern Utah', memberCount: 99 },
+      3: { id: 3, name: 'Northern Arizona', memberCount: 42 },
+      4: { id: 4, name: 'Southern Arizona', memberCount: 23 }
     }
   }),
   environments: memory({
@@ -91,6 +106,27 @@ const services = {
         orgs: [
           { orgId: 'org2', orgName: 'Northern Utah' }
         ]
+      },
+      4: {
+        id: 4,
+        name: 'Grand Canyon National Park',
+        orgs: [
+          { orgId: 3, orgName: 'Northern Arizona' }
+        ]
+      },
+      5: {
+        id: '5',
+        name: 'Organ Pipe Cactus National Monument',
+        orgs: [
+          { orgId: 4, orgName: 'Southern Arizona' }
+        ]
+      },
+      6: {
+        id: 6,
+        name: 'Antelope Canyon',
+        orgs: [
+          { orgId: 'org1', orgName: 'Southern Utah' }
+        ]
       }
     }
   })
@@ -105,7 +141,7 @@ describe('shallowPopulate hook', function () {
       data: {
         id: '11',
         name: 'Dumb Stuff',
-        postsId: ['111', '222', '333']
+        postsId: ['111', '222', '333', 444, 555, '666']
       }
     }
 
@@ -137,7 +173,7 @@ describe('shallowPopulate hook', function () {
       data: {
         id: '11',
         name: 'Dumb Stuff',
-        postsId: ['111', '222', '333']
+        postsId: ['111', '222', '333', 444, 555, '666']
       }
     }
 
@@ -182,7 +218,7 @@ describe('shallowPopulate hook', function () {
         id: '11',
         name: 'Dumb Stuff',
         meta: {
-          postsId: ['111', '222', '333']
+          postsId: ['111', '222', '333', 444, 555, '666']
         }
       }
     }
@@ -327,7 +363,7 @@ describe('shallowPopulate hook', function () {
             data: {
               id: '11',
               name: 'Dumb Stuff',
-              postIds: ['111', '222']
+              postIds: ['111', '222', 444, '555']
             }
           }
 
@@ -403,7 +439,7 @@ describe('shallowPopulate hook', function () {
               id: '11',
               name: 'Dumb Stuff',
               meta: {
-                postsId: ['111']
+                postsId: ['111', 444]
               }
             }
           }
@@ -441,7 +477,7 @@ describe('shallowPopulate hook', function () {
             data: {
               id: '11',
               name: 'Dumb Stuff',
-              postsId: ['111', '222', '333']
+              postsId: ['111', '222', '333', 444, 555, '666']
             }
           }
 
@@ -565,7 +601,7 @@ describe('shallowPopulate hook', function () {
               id: '11',
               name: 'Dumb Stuff',
               postIds: '111',
-              tagIds: ['1111']
+              tagIds: ['1111', 4444]
             }
           }
 
@@ -615,8 +651,8 @@ describe('shallowPopulate hook', function () {
             data: {
               id: '11',
               name: 'Dumb Stuff',
-              postIds: ['111', '222'],
-              tagIds: ['1111', '3333']
+              postIds: ['111', '222', 444],
+              tagIds: ['1111', '3333', 4444]
             }
           }
 
@@ -665,7 +701,7 @@ describe('shallowPopulate hook', function () {
             data: {
               id: '11',
               name: 'Dumb Stuff',
-              tagIds: ['1111', '3333']
+              tagIds: ['1111', '3333', 4444]
             }
           }
 
@@ -675,7 +711,7 @@ describe('shallowPopulate hook', function () {
             .then(context => {
               const { data } = context
               assert(!data.posts, 'posts should have not been populated')
-              assert(data.tags.length === 2, 'tags have been populated')
+              assert(data.tags.length === 3, 'tags have been populated')
               done()
             })
             .catch(done)
@@ -713,8 +749,8 @@ describe('shallowPopulate hook', function () {
               id: '11',
               name: 'Dumb Stuff',
               meta: {
-                postsId: ['111', '222', '333'],
-                tagIds: ['1111', '3333']
+                postsId: ['111', '222', '333', 444],
+                tagIds: ['1111', '3333', 4444]
               }
             }
           }
@@ -762,8 +798,8 @@ describe('shallowPopulate hook', function () {
             data: {
               id: '11',
               name: 'Dumb Stuff',
-              postsId: ['111', '222', '333'],
-              tagIds: ['1111', '3333']
+              postsId: ['111', '222', '333', 444],
+              tagIds: ['1111', '3333', 4444]
             }
           }
 
@@ -852,7 +888,7 @@ describe('shallowPopulate hook', function () {
               {
                 id: '11',
                 name: 'Dumb Stuff',
-                postIds: ['111', '222']
+                postIds: ['111', '222', 444]
               },
               {
                 id: '22',
@@ -862,7 +898,7 @@ describe('shallowPopulate hook', function () {
               {
                 id: '33',
                 name: 'Some Stuff',
-                postIds: ['111']
+                postIds: ['111', 444]
               }
             ]
           }
@@ -907,12 +943,17 @@ describe('shallowPopulate hook', function () {
               {
                 id: '11',
                 name: 'Dumb Stuff',
-                postIds: ['111', '222']
+                postIds: ['111', '222', 444]
               },
               {
                 id: '22',
                 name: 'Smart Stuff',
-                postIds: ['222', '111']
+                postIds: ['222', '111', 444]
+              },
+              {
+                id: 44,
+                name: 'Just Stuff',
+                postIds: [444, 111, '222']
               }
             ]
           }
@@ -956,11 +997,16 @@ describe('shallowPopulate hook', function () {
               {
                 id: '11',
                 name: 'Dumb Stuff',
-                tagIds: ['1111', '3333']
+                tagIds: ['1111', '3333', 4444]
               },
               {
                 id: '22',
                 name: 'Smart Stuff'
+              },
+              {
+                id: 44,
+                name: 'Just Stuff',
+                tagIds: [4444]
               }
             ]
           }
@@ -970,7 +1016,7 @@ describe('shallowPopulate hook', function () {
           shallowPopulate(context)
             .then(context => {
               const { data } = context
-              assert(data[0].tags.length === 2, 'tags have been populated')
+              assert(data[0].tags.length === 3, 'tags have been populated')
               assert(!data[1].tags, 'tags have not been populated')
               done()
             })
@@ -1000,14 +1046,21 @@ describe('shallowPopulate hook', function () {
                 id: '11',
                 name: 'Dumb Stuff',
                 meta: {
-                  postsId: ['111', '333']
+                  postsId: ['111', '333', 444]
                 }
               },
               {
                 id: '22',
                 name: 'Dumb Stuff',
                 meta: {
-                  postsId: ['222', '333', '111']
+                  postsId: ['222', '333', '111', 555]
+                }
+              },
+              {
+                id: 44,
+                name: 'Integer Stuff',
+                meta: {
+                  postsId: ['222', 555]
                 }
               }
             ]
@@ -1018,8 +1071,8 @@ describe('shallowPopulate hook', function () {
           shallowPopulate(context)
             .then(context => {
               const { data } = context
-              assert(data[0].meta.posts.length === 2, 'data[0] posts should have been populated')
-              assert(data[1].meta.posts.length === 3, 'data[0] posts should have been populated')
+              assert(data[0].meta.posts.length === 3, 'data[0] posts should have been populated')
+              assert(data[1].meta.posts.length === 4, 'data[0] posts should have been populated')
               done()
             })
             .catch(done)
@@ -1048,12 +1101,12 @@ describe('shallowPopulate hook', function () {
               {
                 id: '11',
                 name: 'Dumb Stuff',
-                postsId: ['111', '222']
+                postsId: ['111', '222', 444, '555']
               },
               {
                 id: '22',
                 name: 'Smart Stuff',
-                postsId: ['333']
+                postsId: ['333', 444, '555']
               }
             ]
           }
@@ -1064,8 +1117,8 @@ describe('shallowPopulate hook', function () {
             .then(context => {
               const { data } = context
 
-              assert(data[0].posts.length === 2, 'data[0] should have correct posts data')
-              assert(data[1].posts.length === 1, 'data[1] should have correct posts data')
+              assert(data[0].posts.length === 3, 'data[0] should have correct posts data')
+              assert(data[1].posts.length === 2, 'data[1] should have correct posts data')
 
               done()
             })
@@ -1099,6 +1152,10 @@ describe('shallowPopulate hook', function () {
               {
                 id: '222',
                 name: 'I forgot why I love you'
+              },
+              {
+                id: 444,
+                name: 'One, two, three, one, two, three, drink'
               }
             ]
           }
@@ -1154,13 +1211,19 @@ describe('shallowPopulate hook', function () {
                 id: '11',
                 name: 'Dumb Stuff',
                 postIds: '111',
-                tagIds: ['1111', '3333']
+                tagIds: ['1111', '3333', 4444]
               },
               {
                 id: '22',
                 name: 'Smart Stuff',
                 postIds: '222',
                 tagIds: ['1111']
+              },
+              {
+                id: 33,
+                name: 'Just Stuff',
+                postIds: 444,
+                tagIds: ['1111', 4444]
               }
             ]
           }
@@ -1219,13 +1282,13 @@ describe('shallowPopulate hook', function () {
               {
                 id: '11',
                 name: 'Dumb Stuff',
-                postIds: ['111', '222'],
-                tagIds: ['1111', '3333']
+                postIds: ['111', '222', 444],
+                tagIds: ['1111', '3333', 4444]
               },
               {
                 id: '22',
                 name: 'Smart Stuff',
-                postIds: ['222'],
+                postIds: ['222', 444],
                 tagIds: ['1111']
               }
             ]
@@ -1284,12 +1347,12 @@ describe('shallowPopulate hook', function () {
               {
                 id: '11',
                 name: 'Dumb Stuff',
-                postIds: ['111', '222', '333']
+                postIds: ['111', '222', '333', 444]
               },
               {
                 id: '22',
                 name: 'Smart Stuff',
-                postIds: ['111', '333']
+                postIds: ['111', '333', 555]
               }
             ]
           }
@@ -1299,10 +1362,10 @@ describe('shallowPopulate hook', function () {
           shallowPopulate(context)
             .then(context => {
               const { data } = context
-              assert(data[0].posts.length === 3, 'posts have been populated')
+              assert(data[0].posts.length === 4, 'posts have been populated')
               assert(!data[0].tags, 'tags have not been populated')
               assert(!data[1].tags, 'tags have not been populated')
-              assert(data[1].posts.length === 2, 'posts have been populated')
+              assert(data[1].posts.length === 3, 'posts have been populated')
               done()
             })
             .catch(done)
@@ -1417,7 +1480,7 @@ describe('shallowPopulate hook', function () {
               assert(data[0].comments.length === 2, 'data[0] should have correct comments data')
 
               assert(data[1].users.length === 2, 'data[1] should have correct users data')
-              assert(data[1].comments.length === 1, 'data[1] should have correct comments data')
+              assert(data[1].comments.length === 2, 'data[1] should have correct comments data')
 
               done()
             })
@@ -2655,6 +2718,10 @@ describe('shallowPopulate hook', function () {
               {
                 id: '111',
                 name: 'My Monkey and Me'
+              },
+              {
+                id: 444,
+                name: 'One, two, three, one, two, three, drink'
               }
             ]
           }
@@ -2669,7 +2736,7 @@ describe('shallowPopulate hook', function () {
               assert(result[0].comments.length === 2, 'result[0] should have correct comments data')
 
               assert(result[1].users.length === 2, 'result[1] should have correct users data')
-              assert(result[1].comments.length === 1, 'result[1] should have correct comments data')
+              assert(result[1].comments.length === 2, 'result[1] should have correct comments data')
 
               done()
             })
@@ -2699,7 +2766,8 @@ describe('shallowPopulate hook', function () {
             result: [
               { id: 'ts1', name: 'Task Set 1' },
               { id: 'ts2', name: 'Task Set 2' },
-              { id: 'ts3', name: 'Task Set 3' }
+              { id: 'ts3', name: 'Task Set 3' },
+              { id: 4, name: 'Task Set 4' }
             ]
           }
 
@@ -2712,6 +2780,7 @@ describe('shallowPopulate hook', function () {
               assert(result[0].tasks.length === 1, 'result[0] should have correct users data')
               assert(result[1].tasks.length === 2, 'result[1] should have correct comments data')
               assert(result[2].tasks.length === 3, 'result[2] should have correct comments data')
+              assert(result[3].tasks.length === 1, 'result[3] should have correct comments data')
 
               done()
             })
@@ -2743,9 +2812,10 @@ describe('shallowPopulate hook', function () {
               { id: 'task1', name: 'Task 1 - belongs with TaskSet1', taskSet: { taskSetId: 'ts1' } },
               { id: 'task2', name: 'Task 2 - belongs with TaskSet2', taskSet: { taskSetId: 'ts2' } },
               { id: 'task3', name: 'Task 3 - belongs with TaskSet2', taskSet: { taskSetId: 'ts2' } },
-              { id: 'task4', name: 'Task 3 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
-              { id: 'task5', name: 'Task 3 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
-              { id: 'task6', name: 'Task 3 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } }
+              { id: 'task4', name: 'Task 4 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
+              { id: 'task5', name: 'Task 5 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
+              { id: 'task6', name: 'Task 6 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
+              { id: 7, name: 'Task 7 - belongs with TaskSet4', taskSet: { taskSetId: 4 } }
             ]
           }
 
@@ -2787,7 +2857,8 @@ describe('shallowPopulate hook', function () {
             params: {},
             result: [
               { id: 'org1', name: 'Southern Utah', memberCount: 21 },
-              { id: 'org2', name: 'Northern Utah', memberCount: 99 }
+              { id: 'org2', name: 'Northern Utah', memberCount: 99 },
+              { id: 3, name: 'Northern Arizona', memberCount: 42 }
             ]
           }
 
@@ -2799,7 +2870,7 @@ describe('shallowPopulate hook', function () {
 
               result.forEach(r => {
                 if (r.id === 'org1') {
-                  assert(r.envs.length === 2, 'org1 should have two environments')
+                  assert(r.envs.length === 3, 'org1 should have two environments')
                   assert(r.envs[0].orgs[0].orgId === 'org1', 'should have at least one environment populated')
                 } else if (r.id === 'org2') {
                   assert(r.envs.length === 1, 'org2 should have one environment')
