@@ -1,7 +1,7 @@
 {
   "name": "feathers-shallow-populate",
   "description": "Feathers Shallow Populate",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "homepage": "https://github.com/Mattchewone/feathers-shallow-populate.git",
   "main": "lib/",
   "keywords": [
