@@ -26,7 +26,9 @@ const options = {
     service: 'tags',
     nameAs: 'tags',
     keyHere: 'tagIds',
-    keyThere: '_id'
+    keyThere: '_id',
+    asArray: true, // by default
+    params: {} // by default
   }
 }
 
@@ -36,6 +38,17 @@ app.service('posts').hooks({
   }
 });
 ```
+
+## Options for include
+
+| **Option** | **Description** |
+|------------|-----------------|
+| `service`  | The service to reference<br><br>**required**<br>**Type:** `{String}` |
+| `nameAs`   | The property to be assigned to on this entry<br><br>**required**<br>**Type:** `{String}` |
+| `keyHere`  | The primary or secondary key for this entry<br><br>**required**<br>**Type:** `{String}` |
+| `keyThere` | The primary or secondary key for the referenced entry/entries<br><br>**required**<br>**Type:** `{String}` |
+| `asArray`  | Is the referenced item a single entry or an array of entries?<br><br>**optional - default:** `true`<br>**Type:** `{Boolean}`
+| `params`   | Additional params to be passed to the underlying service.<br>You can mutate the passed `params` object or return a newly created `params` object which gets merged deeply <br>Merged deeply after the params are generated internally.<br><quote>**ProTip:** You can use this for adding a '$select' property or passing authentication and user data from 'context' to 'params' to restrict accesss</quote><br><br>**optional - default:** `{}`<br>**Type:** `{Object | Function(params, context): undefined|params}` |
 
 ## Multiple Populates
 ```js
@@ -47,13 +60,17 @@ const options = {
       service: 'tags',
       nameAs: 'tags',
       keyHere: 'tagIds',
-      keyThere: '_id'
+      keyThere: '_id',
+      asArray: true,
+      params: {}
     },
     {
       service: 'comments',
       nameAs: 'comments',
       keyHere: 'commentIds',
-      keyThere: '_id'
+      keyThere: '_id',
+      asArray: true,
+      params: {}
     }
   ]
 }
@@ -105,7 +122,8 @@ const options = {
     nameAs: 'publisher',
     keyHere: 'publisherId',
     keyThere: 'id',
-    asArray: false
+    asArray: false,
+    params: {}
   }
 }
 

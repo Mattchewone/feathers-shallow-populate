@@ -232,6 +232,146 @@ describe('shallowPopulate hook', function () {
       .catch(done)
   })
 
+  it('can pass in custom params for lookup and merges them deeply', function (done) {
+    const options = {
+      include: {
+        // from: 'users',
+        service: 'posts',
+        nameAs: 'posts',
+        keyHere: 'postsId',
+        keyThere: 'id',
+        params: { query: { $select: ['id'] } }
+      }
+    }
+
+    const context = {
+      method: 'create',
+      type: 'after',
+      app: {
+        service () {
+          return {
+            find (params = {}) {
+              assert.deepEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
+              assert.deepEqual(params.query.$select, ['id'], 'we have a merged query')
+              return []
+            }
+          }
+        }
+      },
+      params: {},
+      result: {
+        id: '11',
+        name: 'Dumb Stuff',
+        meta: {
+          postsId: ['111', '222', '333', 444, 555, '666']
+        }
+      }
+    }
+
+    const shallowPopulate = makePopulate(options)
+
+    shallowPopulate(context)
+      .then(response => {
+        done()
+      })
+      .catch(done)
+  })
+
+  it('can pass in custom params-function which overrides params', function (done) {
+    const options = {
+      include: {
+        // from: 'users',
+        service: 'posts',
+        nameAs: 'posts',
+        keyHere: 'postsId',
+        keyThere: 'id',
+        params: (params, context) => {
+          params.query.$select = ["id"]
+        }
+      }
+    }
+
+    const context = {
+      method: 'create',
+      type: 'after',
+      app: {
+        service () {
+          return {
+            find (params = {}) {
+              assert.deepEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
+              assert.deepEqual(params.query.$select, ['id'], 'we have a merged query')
+              return []
+            }
+          }
+        }
+      },
+      params: {},
+      result: {
+        id: '11',
+        name: 'Dumb Stuff',
+        meta: {
+          postsId: ['111', '222', '333', 444, 555, '666']
+        }
+      }
+    }
+
+    const shallowPopulate = makePopulate(options)
+
+    shallowPopulate(context)
+      .then(response => {
+        done()
+      })
+      .catch(done)
+  })
+
+  it('can pass in custom params-function with context', function (done) {
+    const options = {
+      include: {
+        // from: 'users',
+        service: 'posts',
+        nameAs: 'posts',
+        keyHere: 'postsId',
+        keyThere: 'id',
+        params: (params, context) => {
+          assert(context.method === 'create', 'we can pass the context to include')
+          params.method = context.method;
+        }
+      }
+    }
+
+    const context = {
+      method: 'create',
+      type: 'after',
+      app: {
+        service () {
+          return {
+            find (params = {}) {
+              assert(params.method === 'create', 'we can manipulate the params based on the context')
+              return []
+            }
+          }
+        }
+      },
+      params: {},
+      result: {
+        id: '11',
+        name: 'Dumb Stuff',
+        meta: {
+          postsId: ['111', '222', '333', 444, 555, '666']
+        }
+      }
+    }
+
+    const shallowPopulate = makePopulate(options)
+
+    shallowPopulate(context)
+      .then(response => {
+        done()
+      })
+      .catch(done)
+  })
+
+
   it('does nothing if we have no data', function (done) {
     const options = {
       include: {

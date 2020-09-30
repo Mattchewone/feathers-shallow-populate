@@ -33,7 +33,7 @@
     "changelog": "github_changelog_generator && git add CHANGELOG.md && git commit -am \"Updating changelog\"",
     "lint": "standard lib/*.js lib/**/*.js test/*.js test/**/*.js --fix",
     "mocha": "mocha --opts mocha.opts",
-    "coverage": "istanbul cover node_modules/mocha/bin/_mocha -- --opts mocha.opts",
+    "coverage": "nyc npm run mocha",
     "test": "npm run lint && npm run coverage"
   },
   "standard": {
@@ -46,15 +46,15 @@
   },
   "dependencies": {
     "assert": "^2.0.0",
-    "feathers-hooks-common": "^5.0.2",
-    "lodash": "^4.17.15"
+    "feathers-hooks-common": "^5.0.4",
+    "lodash": "^4.17.20"
   },
   "devDependencies": {
     "chai": "^4.2.0",
     "feathers-memory": "^4.1.0",
-    "istanbul": "^0.4.5",
-    "mocha": "^6.1.4",
+    "mocha": "^6.2.3",
+    "nyc": "^15.1.0",
     "sift": "^11.0.10",
-    "standard": "^13.0.2"
+    "standard": "^13.1.0"
   }
 }
