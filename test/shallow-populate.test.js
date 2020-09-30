@@ -251,8 +251,8 @@ describe('shallowPopulate hook', function () {
         service () {
           return {
             find (params = {}) {
-              assert.deepEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
-              assert.deepEqual(params.query.$select, ['id'], 'we have a merged query')
+              assert.deepStrictEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
+              assert.deepStrictEqual(params.query.$select, ['id'], 'we have a merged query')
               return []
             }
           }
@@ -286,7 +286,7 @@ describe('shallowPopulate hook', function () {
         keyHere: 'postsId',
         keyThere: 'id',
         params: (params, context) => {
-          params.query.$select = ["id"]
+          params.query.$select = ['id']
         }
       }
     }
@@ -298,8 +298,8 @@ describe('shallowPopulate hook', function () {
         service () {
           return {
             find (params = {}) {
-              assert.deepEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
-              assert.deepEqual(params.query.$select, ['id'], 'we have a merged query')
+              assert.deepStrictEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
+              assert.deepStrictEqual(params.query.$select, ['id'], 'we have a merged query')
               return []
             }
           }
@@ -334,7 +334,7 @@ describe('shallowPopulate hook', function () {
         keyThere: 'id',
         params: (params, context) => {
           assert(context.method === 'create', 'we can pass the context to include')
-          params.method = context.method;
+          params.method = context.method
         }
       }
     }
@@ -370,7 +370,6 @@ describe('shallowPopulate hook', function () {
       })
       .catch(done)
   })
-
 
   it('does nothing if we have no data', function (done) {
     const options = {
