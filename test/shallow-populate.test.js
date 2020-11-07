@@ -132,247 +132,296 @@ const services = {
   })
 }
 
-describe('shallowPopulate hook', function () {
-  it('throws when used without an includes object', function (done) {
-    const context = {
-      method: 'create',
-      type: 'before',
-      params: {},
-      data: {
-        id: '11',
-        name: 'Dumb Stuff',
-        postsId: ['111', '222', '333', 444, 555, '666']
-      }
-    }
-
-    try {
-      const shallowPopulate = makePopulate()
-      shallowPopulate(context)
-        .then(done)
-        .catch(done)
-    } catch (error) {
-      assert(error.message === 'shallowPopulate hook: You must provide one or more relationships in the `include` option.', 'threw correct error message')
-      done()
-    }
+describe('shallowPopulate hook', () => {
+  it('throws when used without an includes object', () => {
+    assert.throws(() => {
+      makePopulate()
+    }, 'does not work with no includes object')
   })
 
-  it('throws when an includes array has missing properties', function (done) {
+  it('throws when an includes array has missing properties', () => {
     const options = {
       include: {
-        // from: 'users',
         service: 'posts',
         nameAs: 'posts',
         keyHere: 'postsId'
       }
     }
 
-    const context = {
-      method: 'create',
-      type: 'before',
-      params: {},
-      data: {
-        id: '11',
-        name: 'Dumb Stuff',
-        postsId: ['111', '222', '333', 444, 555, '666']
-      }
+    assert.throws(() => {
+      makePopulate(options)
+    }, Error, 'Every `include` must contain `service`, `nameAs`, `keyHere`, and `keyThere` properties', 'error has correct message')
+  })
+
+  it('throws when an includes array has properties with same `nameAs` property', () => {
+    const options = {
+      include: [
+        {
+          service: 'posts',
+          nameAs: 'posts',
+          keyHere: 'postsId'
+        },
+        {
+          service: 'posts',
+          nameAs: 'posts',
+          keyHere: 'postsId'
+        }
+      ]
     }
 
-    try {
+    assert.throws(() => {
+      makePopulate(options)
+    }, 'Every `include` must have unique `nameAs` property')
+  })
+
+  describe('params', () => {
+    it('can pass in custom params for lookup', async () => {
+      const options = {
+        include: {
+          // from: 'users',
+          service: 'posts',
+          nameAs: 'posts',
+          keyHere: 'postsId',
+          keyThere: 'id',
+          params: { fromCommentsPopulate: true }
+        }
+      }
+
+      const context = {
+        method: 'create',
+        type: 'after',
+        app: {
+          service () {
+            return {
+              find (params = {}) {
+                assert(params.fromCommentsPopulate === true, 'we have a custom param')
+                return []
+              }
+            }
+          }
+        },
+        params: {},
+        result: {
+          id: '11',
+          name: 'Dumb Stuff',
+          meta: {
+            postsId: ['111', '222', '333', 444, 555, '666']
+          }
+        }
+      }
+
       const shallowPopulate = makePopulate(options)
-      shallowPopulate(context)
-        .then(done)
-        .catch(done)
-    } catch (error) {
-      assert(error.message === 'shallowPopulate hook: Every `include` must contain `service`, `nameAs`, `keyHere`, and `keyThere` properties', 'error has correct message')
-      done()
-    }
-  })
 
-  it('can pass in custom params for lookup', function (done) {
-    const options = {
-      include: {
-        // from: 'users',
-        service: 'posts',
-        nameAs: 'posts',
-        keyHere: 'postsId',
-        keyThere: 'id',
-        params: { fromCommentsPopulate: true }
+      await shallowPopulate(context)
+    })
+
+    it('can pass in custom params for lookup and merges them deeply', async () => {
+      const options = {
+        include: {
+          // from: 'users',
+          service: 'posts',
+          nameAs: 'posts',
+          keyHere: 'postsId',
+          keyThere: 'id',
+          params: { query: { $select: ['id'] } }
+        }
       }
-    }
 
-    const context = {
-      method: 'create',
-      type: 'after',
-      app: {
-        service () {
-          return {
-            find (params = {}) {
-              assert(params.fromCommentsPopulate === true, 'we have a custom param')
-              return []
+      const context = {
+        method: 'create',
+        type: 'after',
+        app: {
+          service () {
+            return {
+              find (params = {}) {
+                assert.deepStrictEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
+                assert.deepStrictEqual(params.query.$select, ['id'], 'we have a merged query')
+                return []
+              }
             }
           }
-        }
-      },
-      params: {},
-      result: {
-        id: '11',
-        name: 'Dumb Stuff',
-        meta: {
-          postsId: ['111', '222', '333', 444, 555, '666']
-        }
-      }
-    }
-
-    const shallowPopulate = makePopulate(options)
-
-    shallowPopulate(context)
-      .then(response => {
-        done()
-      })
-      .catch(done)
-  })
-
-  it('can pass in custom params for lookup and merges them deeply', function (done) {
-    const options = {
-      include: {
-        // from: 'users',
-        service: 'posts',
-        nameAs: 'posts',
-        keyHere: 'postsId',
-        keyThere: 'id',
-        params: { query: { $select: ['id'] } }
-      }
-    }
-
-    const context = {
-      method: 'create',
-      type: 'after',
-      app: {
-        service () {
-          return {
-            find (params = {}) {
-              assert.deepEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
-              assert.deepEqual(params.query.$select, ['id'], 'we have a merged query')
-              return []
-            }
+        },
+        params: {},
+        result: {
+          id: '11',
+          name: 'Dumb Stuff',
+          meta: {
+            postsId: ['111', '222', '333', 444, 555, '666']
           }
         }
-      },
-      params: {},
-      result: {
-        id: '11',
-        name: 'Dumb Stuff',
-        meta: {
-          postsId: ['111', '222', '333', 444, 555, '666']
-        }
       }
-    }
 
-    const shallowPopulate = makePopulate(options)
+      const shallowPopulate = makePopulate(options)
 
-    shallowPopulate(context)
-      .then(response => {
-        done()
-      })
-      .catch(done)
-  })
+      await shallowPopulate(context)
+    })
 
-  it('can pass in custom params-function which overrides params', function (done) {
-    const options = {
-      include: {
-        // from: 'users',
-        service: 'posts',
-        nameAs: 'posts',
-        keyHere: 'postsId',
-        keyThere: 'id',
-        params: (params, context) => {
-          params.query.$select = ["id"]
-        }
-      }
-    }
-
-    const context = {
-      method: 'create',
-      type: 'after',
-      app: {
-        service () {
-          return {
-            find (params = {}) {
-              assert.deepEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
-              assert.deepEqual(params.query.$select, ['id'], 'we have a merged query')
-              return []
-            }
+    it('can pass in custom params-function which overrides params', async () => {
+      const options = {
+        include: {
+          // from: 'users',
+          service: 'posts',
+          nameAs: 'posts',
+          keyHere: 'postsId',
+          keyThere: 'id',
+          params: (params, context) => {
+            params.query.$select = ['id']
           }
         }
-      },
-      params: {},
-      result: {
-        id: '11',
-        name: 'Dumb Stuff',
-        meta: {
-          postsId: ['111', '222', '333', 444, 555, '666']
-        }
       }
-    }
 
-    const shallowPopulate = makePopulate(options)
-
-    shallowPopulate(context)
-      .then(response => {
-        done()
-      })
-      .catch(done)
-  })
-
-  it('can pass in custom params-function with context', function (done) {
-    const options = {
-      include: {
-        // from: 'users',
-        service: 'posts',
-        nameAs: 'posts',
-        keyHere: 'postsId',
-        keyThere: 'id',
-        params: (params, context) => {
-          assert(context.method === 'create', 'we can pass the context to include')
-          params.method = context.method;
-        }
-      }
-    }
-
-    const context = {
-      method: 'create',
-      type: 'after',
-      app: {
-        service () {
-          return {
-            find (params = {}) {
-              assert(params.method === 'create', 'we can manipulate the params based on the context')
-              return []
+      const context = {
+        method: 'create',
+        type: 'after',
+        app: {
+          service () {
+            return {
+              find (params = {}) {
+                assert.deepStrictEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
+                assert.deepStrictEqual(params.query.$select, ['id'], 'we have a merged query')
+                return []
+              }
             }
           }
-        }
-      },
-      params: {},
-      result: {
-        id: '11',
-        name: 'Dumb Stuff',
-        meta: {
-          postsId: ['111', '222', '333', 444, 555, '666']
+        },
+        params: {},
+        result: {
+          id: '11',
+          name: 'Dumb Stuff',
+          meta: {
+            postsId: ['111', '222', '333', 444, 555, '666']
+          }
         }
       }
-    }
 
-    const shallowPopulate = makePopulate(options)
+      const shallowPopulate = makePopulate(options)
 
-    shallowPopulate(context)
-      .then(response => {
-        done()
-      })
-      .catch(done)
+      await shallowPopulate(context)
+    })
+
+    it('can pass in custom params-function with context', async () => {
+      let paramsFunctionCalled = false
+
+      const options = {
+        include: {
+          service: 'posts',
+          nameAs: 'posts',
+          keyHere: 'postsId',
+          keyThere: 'id',
+          params: (params, context) => {
+            assert(context.method === 'create', 'we can pass the context to include')
+            params.method = context.method
+            paramsFunctionCalled = true
+          }
+        }
+      }
+
+      const context = {
+        method: 'create',
+        type: 'after',
+        app: {
+          service () {
+            return {
+              find (params = {}) {
+                assert(params.method === 'create', 'we can manipulate the params based on the context')
+                return []
+              }
+            }
+          }
+        },
+        params: {},
+        result: {
+          id: '11',
+          name: 'Dumb Stuff',
+          meta: {
+            postsId: ['111', '222', '333', 444, 555, '666']
+          }
+        }
+      }
+
+      const shallowPopulate = makePopulate(options)
+
+      await shallowPopulate(context)
+      assert(paramsFunctionCalled, 'params function was called')
+    })
+
+    it('wait for params function that returns a promise', async () => {
+      let calledAsyncFunction = false
+      const options = {
+        include: {
+          service: 'posts',
+          nameAs: 'posts',
+          params: async (params, context) => {
+            await new Promise(resolve => {
+              setTimeout(resolve, 500)
+            })
+            params.calledAsyncFunction = true
+            calledAsyncFunction = true
+          }
+        }
+      }
+
+      const context = {
+        method: 'create',
+        type: 'after',
+        app: {
+          service () {
+            return {
+              find (params = {}) {
+                assert(params.calledAsyncFunction, 'waited for async params function before find')
+                return []
+              }
+            }
+          }
+        },
+        params: {},
+        result: {
+          id: '11',
+          name: 'Dumb Stuff',
+          meta: {
+            postsId: ['111', '222', '333', 444, 555, '666']
+          }
+        }
+      }
+
+      const shallowPopulate = makePopulate(options)
+      await shallowPopulate(context)
+      assert(calledAsyncFunction, 'waited for async params function')
+    })
+
+    it('can pass params as function without `keyThere` and ``keyHere`', () => {
+      const options = {
+        include: {
+          service: 'posts',
+          nameAs: 'posts',
+          params: (params, context) => {
+          }
+        }
+      }
+
+      assert.doesNotThrow(() => {
+        makePopulate(options)
+      }, 'does not throw error')
+    })
+
+    it('can pass params as not empty object without `keyThere` and ``keyHere`', () => {
+      const options = {
+        include: {
+          service: 'posts',
+          nameAs: 'posts',
+          params: {
+            test: true
+          }
+        }
+      }
+
+      assert.doesNotThrow(() => {
+        makePopulate(options)
+      }, 'does not throw error')
+    })
   })
 
-
-  it('does nothing if we have no data', function (done) {
+  it('does nothing if we have no data', async () => {
     const options = {
       include: {
         // from: 'users',
@@ -394,17 +443,13 @@ describe('shallowPopulate hook', function () {
 
     const shallowPopulate = makePopulate(options)
 
-    shallowPopulate(context)
-      .then(response => {
-        const { result } = response
-        assert.deepStrictEqual(result.data, context.result.data, 'data should not be touched')
-        done()
-      })
-      .catch(done)
+    const { result } = await shallowPopulate(context)
+
+    assert.deepStrictEqual(result.data, context.result.data, 'data should not be touched')
   })
 
-  describe('Before Hook:', function () {
-    it('does nothing when data is empty', function (done) {
+  describe('Before Hook:', () => {
+    it('does nothing when data is empty', async () => {
       const options = {
         include: {
           // from: 'users',
@@ -429,18 +474,14 @@ describe('shallowPopulate hook', function () {
 
       const shallowPopulate = makePopulate(options)
 
-      shallowPopulate(context)
-        .then(response => {
-          const { data } = response
-          assert.deepStrictEqual(data, context.data, 'data should not be touched')
-          done()
-        })
-        .catch(done)
+      const { data } = await shallowPopulate(context)
+
+      assert.deepStrictEqual(data, context.data, 'data should not be touched')
     })
 
-    describe('Single Record:', function () {
-      describe('Single Relationship:', function () {
-        it('as object', function (done) {
+    describe('Single Record:', () => {
+      describe('Single Relationship:', () => {
+        it('as object', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -469,18 +510,14 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data.post, 'post should have been populated')
-              assert(!Array.isArray(data.post), 'post should not be an array')
-              assert(data.post.id === '111', 'post has correct id')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+
+          assert(data.post, 'post should have been populated')
+          assert(!Array.isArray(data.post), 'post should not be an array')
+          assert(data.post.id === '111', 'post has correct id')
         })
 
-        it('as object when array', function (done) {
+        it('as object when array', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -509,18 +546,14 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data.post, 'post should have been populated')
-              assert(!Array.isArray(data.post), 'post should not be an array')
-              assert(data.post.id === '111', 'post has correct id')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+
+          assert(data.post, 'post should have been populated')
+          assert(!Array.isArray(data.post), 'post should not be an array')
+          assert(data.post.id === '111', 'post has correct id')
         })
 
-        it('does nothing if no populate data on item', function (done) {
+        it('does nothing if no populate data on item', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -547,16 +580,12 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(!data.posts, 'posts should have not been populated')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+
+          assert(!data.posts, 'posts should have not been populated')
         })
 
-        it('populates from local keys dot notation', function (done) {
+        it('populates from local keys dot notation', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -586,16 +615,11 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data.meta.posts.length, 'posts should have been populated')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data.meta.posts.length, 'posts should have been populated')
         })
 
-        it('populates from local keys', function (done) {
+        it('populates from local keys', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -623,16 +647,11 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data.posts.length, 'posts should have been populated')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data.posts.length, 'posts should have been populated')
         })
 
-        it.skip('populates empty nameAs property if no relatedItems', function (done) {
+        it.skip('populates empty nameAs property if no relatedItems', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -659,16 +678,11 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data.posts, 'posts should have been populated')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data.posts, 'posts should have been populated')
         })
 
-        it('populates from foreign keys', function (done) {
+        it('populates from foreign keys', async () => {
           const options = {
             include: {
               // from: 'posts',
@@ -695,20 +709,15 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data.users, 'should have users property')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data.users, 'should have users property')
         })
 
-        it.skip('handles missing _id on create', function (done) {})
+        it.skip('handles missing _id on create', async () => {})
       })
 
-      describe('Multiple Relationship:', function () {
-        it('as object', function (done) {
+      describe('Multiple Relationship:', () => {
+        it('as object', async () => {
           const options = {
             include: [
               {
@@ -747,19 +756,14 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data.post, 'post should have been populated')
-              assert(!Array.isArray(data.post), 'post should not be an array')
-              assert(data.post.id === '111', 'post has correct id')
-              assert(Array.isArray(data.tags), 'tags is an array')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data.post, 'post should have been populated')
+          assert(!Array.isArray(data.post), 'post should not be an array')
+          assert(data.post.id === '111', 'post has correct id')
+          assert(Array.isArray(data.tags), 'tags is an array')
         })
 
-        it('as object when array', function (done) {
+        it('as object when array', async () => {
           const options = {
             include: [
               {
@@ -798,19 +802,14 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data.post, 'post should have been populated')
-              assert(!Array.isArray(data.post), 'post should not be an array')
-              assert(data.post.id === '111', 'post has correct id')
-              assert(Array.isArray(data.tags), 'tags is an array')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data.post, 'post should have been populated')
+          assert(!Array.isArray(data.post), 'post should not be an array')
+          assert(data.post.id === '111', 'post has correct id')
+          assert(Array.isArray(data.tags), 'tags is an array')
         })
 
-        it('does nothing if some populate data on item does not exist', function (done) {
+        it('does nothing if some populate data on item does not exist', async () => {
           const options = {
             include: [
               {
@@ -847,17 +846,12 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(!data.posts, 'posts should have not been populated')
-              assert(data.tags.length === 3, 'tags have been populated')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(!data.posts, 'posts should have not been populated')
+          assert(data.tags.length === 3, 'tags have been populated')
         })
 
-        it('populates from local keys dot notation', function (done) {
+        it('populates from local keys dot notation', async () => {
           const options = {
             include: [
               {
@@ -897,17 +891,12 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data.meta.posts.length, 'posts should have been populated')
-              assert(data.meta.tags.length, 'posts should have been populated')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data.meta.posts.length, 'posts should have been populated')
+          assert(data.meta.tags.length, 'posts should have been populated')
         })
 
-        it('populates from local keys', function (done) {
+        it('populates from local keys', async () => {
           const options = {
             include: [
               {
@@ -945,16 +934,12 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data.posts.length, 'posts should have been populated')
-              done()
-            })
-            .catch(done)
+          const result = await shallowPopulate(context)
+          const { data } = result
+          assert(data.posts.length, 'posts should have been populated')
         })
 
-        it('populates from foreign keys', function (done) {
+        it('populates from foreign keys', async () => {
           const options = {
             include: [
               {
@@ -988,23 +973,18 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data.users.length === 1, 'data should have correct users data')
-              assert(data.comments.length === 2, 'data should have correct comments data')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data.users.length === 1, 'data should have correct users data')
+          assert(data.comments.length === 2, 'data should have correct comments data')
         })
 
-        it.skip('handles missing _id on create', function (done) {})
+        it.skip('handles missing _id on create', async () => {})
       })
     })
 
-    describe('Multiple Record:', function () {
-      describe('Single Relationship:', function () {
-        it('as object', function (done) {
+    describe('Multiple Record:', () => {
+      describe('Single Relationship:', () => {
+        it('as object', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -1045,21 +1025,16 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data[0].post, 'post should have been populated')
-              assert(!Array.isArray(data[0].post), 'post should not be an array')
-              assert(data[0].post.id === '111', 'post has correct id')
-              assert(data[1].post, 'post should have been populated')
-              assert(!Array.isArray(data[1].post), 'post should not be an array')
-              assert(data[1].post.id === '222', 'post has correct id')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data[0].post, 'post should have been populated')
+          assert(!Array.isArray(data[0].post), 'post should not be an array')
+          assert(data[0].post.id === '111', 'post has correct id')
+          assert(data[1].post, 'post should have been populated')
+          assert(!Array.isArray(data[1].post), 'post should not be an array')
+          assert(data[1].post.id === '222', 'post has correct id')
         })
 
-        it('as object when array', function (done) {
+        it('as object when array', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -1100,21 +1075,16 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data[0].post, 'post should have been populated')
-              assert(!Array.isArray(data[0].post), 'post should not be an array')
-              assert(data[0].post.id === '111', 'post has correct id')
-              assert(data[1].post, 'post should have been populated')
-              assert(!Array.isArray(data[1].post), 'post should not be an array')
-              assert(data[1].post.id === '222', 'post has correct id')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data[0].post, 'post should have been populated')
+          assert(!Array.isArray(data[0].post), 'post should not be an array')
+          assert(data[0].post.id === '111', 'post has correct id')
+          assert(data[1].post, 'post should have been populated')
+          assert(!Array.isArray(data[1].post), 'post should not be an array')
+          assert(data[1].post.id === '222', 'post has correct id')
         })
 
-        it('does nothing if some populate data on item does not exist', function (done) {
+        it('does nothing if some populate data on item does not exist', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -1153,17 +1123,12 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data[0].tags.length === 3, 'tags have been populated')
-              assert(!data[1].tags, 'tags have not been populated')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data[0].tags.length === 3, 'tags have been populated')
+          assert(!data[1].tags, 'tags have not been populated')
         })
 
-        it('populates from local keys dot notation', function (done) {
+        it('populates from local keys dot notation', async () => {
           const options = {
             include: {
               service: 'posts',
@@ -1208,17 +1173,12 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data[0].meta.posts.length === 3, 'data[0] posts should have been populated')
-              assert(data[1].meta.posts.length === 4, 'data[0] posts should have been populated')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data[0].meta.posts.length === 3, 'data[0] posts should have been populated')
+          assert(data[1].meta.posts.length === 4, 'data[0] posts should have been populated')
         })
 
-        it('populates from local keys', function (done) {
+        it('populates from local keys', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -1253,19 +1213,12 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-
-              assert(data[0].posts.length === 3, 'data[0] should have correct posts data')
-              assert(data[1].posts.length === 2, 'data[1] should have correct posts data')
-
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data[0].posts.length === 3, 'data[0] should have correct posts data')
+          assert(data[1].posts.length === 2, 'data[1] should have correct posts data')
         })
 
-        it('populates from foreign keys', function (done) {
+        it('populates from foreign keys', async () => {
           const options = {
             include: {
               // from: 'posts',
@@ -1302,22 +1255,17 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              data.forEach(item => {
-                assert(item.users, 'should have users property')
-              })
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          data.forEach(item => {
+            assert(item.users, 'should have users property')
+          })
         })
 
-        it.skip('handles missing _id on create', function (done) {})
+        it.skip('handles missing _id on create', async () => {})
       })
 
-      describe('Multiple Relationship:', function () {
-        it('as object', function (done) {
+      describe('Multiple Relationship:', () => {
+        it('as object', async () => {
           const options = {
             include: [
               {
@@ -1370,26 +1318,21 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data[0].post, 'post should have been populated')
-              assert(!Array.isArray(data[0].post), 'post should not be an array')
-              assert(data[0].post.id === '111', 'post has correct id')
-              assert(data[0].tags, 'tags should have been populated')
-              assert(Array.isArray(data[0].tags), 'tags should be an array')
+          const { data } = await shallowPopulate(context)
+          assert(data[0].post, 'post should have been populated')
+          assert(!Array.isArray(data[0].post), 'post should not be an array')
+          assert(data[0].post.id === '111', 'post has correct id')
+          assert(data[0].tags, 'tags should have been populated')
+          assert(Array.isArray(data[0].tags), 'tags should be an array')
 
-              assert(data[1].post, 'post should have been populated')
-              assert(!Array.isArray(data[1].post), 'post should not be an array')
-              assert(data[1].post.id === '222', 'post has correct id')
-              assert(data[1].tags, 'tags should have been populated')
-              assert(Array.isArray(data[1].tags), 'tags should be an array')
-              done()
-            })
-            .catch(done)
+          assert(data[1].post, 'post should have been populated')
+          assert(!Array.isArray(data[1].post), 'post should not be an array')
+          assert(data[1].post.id === '222', 'post has correct id')
+          assert(data[1].tags, 'tags should have been populated')
+          assert(Array.isArray(data[1].tags), 'tags should be an array')
         })
 
-        it('as object when array', function (done) {
+        it('as object when array', async () => {
           const options = {
             include: [
               {
@@ -1436,26 +1379,21 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data[0].post, 'post should have been populated')
-              assert(!Array.isArray(data[0].post), 'post should not be an array')
-              assert(data[0].post.id === '111', 'post has correct id')
-              assert(data[0].tags, 'tags should have been populated')
-              assert(Array.isArray(data[0].tags), 'tags should be an array')
+          const { data } = await shallowPopulate(context)
+          assert(data[0].post, 'post should have been populated')
+          assert(!Array.isArray(data[0].post), 'post should not be an array')
+          assert(data[0].post.id === '111', 'post has correct id')
+          assert(data[0].tags, 'tags should have been populated')
+          assert(Array.isArray(data[0].tags), 'tags should be an array')
 
-              assert(data[1].post, 'post should have been populated')
-              assert(!Array.isArray(data[1].post), 'post should not be an array')
-              assert(data[1].post.id === '222', 'post has correct id')
-              assert(data[1].tags, 'tags should have been populated')
-              assert(Array.isArray(data[1].tags), 'tags should be an array')
-              done()
-            })
-            .catch(done)
+          assert(data[1].post, 'post should have been populated')
+          assert(!Array.isArray(data[1].post), 'post should not be an array')
+          assert(data[1].post.id === '222', 'post has correct id')
+          assert(data[1].tags, 'tags should have been populated')
+          assert(Array.isArray(data[1].tags), 'tags should be an array')
         })
 
-        it('does nothing if some populate data on item does not exist', function (done) {
+        it('does nothing if some populate data on item does not exist', async () => {
           const options = {
             include: [
               {
@@ -1499,19 +1437,14 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data[0].posts.length === 4, 'posts have been populated')
-              assert(!data[0].tags, 'tags have not been populated')
-              assert(!data[1].tags, 'tags have not been populated')
-              assert(data[1].posts.length === 3, 'posts have been populated')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data[0].posts.length === 4, 'posts have been populated')
+          assert(!data[0].tags, 'tags have not been populated')
+          assert(!data[1].tags, 'tags have not been populated')
+          assert(data[1].posts.length === 3, 'posts have been populated')
         })
 
-        it('populates from local keys', function (done) {
+        it('populates from local keys', async () => {
           const options = {
             include: [
               {
@@ -1557,22 +1490,15 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
+          const { data } = await shallowPopulate(context)
+          assert(data[0].posts.length === 3, 'data[0] should have correct posts data')
+          assert(data[0].tags.length === 2, 'data[0] should have correct tags data')
 
-              assert(data[0].posts.length === 3, 'data[0] should have correct posts data')
-              assert(data[0].tags.length === 2, 'data[0] should have correct tags data')
-
-              assert(data[1].posts.length === 2, 'data[1] should have correct posts data')
-              assert(data[1].tags.length === 1, 'data[1] should have correct tags data')
-
-              done()
-            })
-            .catch(done)
+          assert(data[1].posts.length === 2, 'data[1] should have correct posts data')
+          assert(data[1].tags.length === 1, 'data[1] should have correct tags data')
         })
 
-        it('populates from foreign keys', function (done) {
+        it('populates from foreign keys', async () => {
           const options = {
             include: [
               {
@@ -1612,28 +1538,21 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
+          const { data } = await shallowPopulate(context)
+          assert(data[0].users.length === 1, 'data[0] should have correct users data')
+          assert(data[0].comments.length === 2, 'data[0] should have correct comments data')
 
-              assert(data[0].users.length === 1, 'data[0] should have correct users data')
-              assert(data[0].comments.length === 2, 'data[0] should have correct comments data')
-
-              assert(data[1].users.length === 2, 'data[1] should have correct users data')
-              assert(data[1].comments.length === 2, 'data[1] should have correct comments data')
-
-              done()
-            })
-            .catch(done)
+          assert(data[1].users.length === 2, 'data[1] should have correct users data')
+          assert(data[1].comments.length === 2, 'data[1] should have correct comments data')
         })
 
-        it.skip('handles missing _id on create', function (done) {})
+        it.skip('handles missing _id on create', async () => {})
       })
     })
   })
 
-  describe('After Hook', function () {
-    it('does nothing when result is empty', function (done) {
+  describe('After Hook', () => {
+    it('does nothing when result is empty', async () => {
       const options = {
         include: {
           // from: 'users',
@@ -1660,18 +1579,14 @@ describe('shallowPopulate hook', function () {
 
       const shallowPopulate = makePopulate(options)
 
-      shallowPopulate(context)
-        .then(response => {
-          const { result } = response
-          assert.deepStrictEqual(result.data, context.result.data, 'data should not be touched')
-          done()
-        })
-        .catch(done)
+      const { result } = await shallowPopulate(context)
+      const { data } = result
+      assert.deepStrictEqual(data, context.result.data, 'data should not be touched')
     })
 
-    describe('Single Record:', function () {
-      describe('Single Relationship:', function () {
-        it('as object', function (done) {
+    describe('Single Record:', () => {
+      describe('Single Relationship:', () => {
+        it('as object', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -1702,18 +1617,14 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              assert(result.data.post, 'post should have been populated')
-              assert(!Array.isArray(result.data.post), 'post should not be an array')
-              assert(result.data.post.id === '111', 'post has correct id')
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          const { data } = result
+          assert(data.post, 'post should have been populated')
+          assert(!Array.isArray(data.post), 'post should not be an array')
+          assert(data.post.id === '111', 'post has correct id')
         })
 
-        it('as object when array', function (done) {
+        it('as object when array', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -1744,18 +1655,13 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              assert(result.data.post, 'post should have been populated')
-              assert(!Array.isArray(result.data.post), 'post should not be an array')
-              assert(result.data.post.id === '111', 'post has correct id')
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          assert(result.data.post, 'post should have been populated')
+          assert(!Array.isArray(result.data.post), 'post should not be an array')
+          assert(result.data.post.id === '111', 'post has correct id')
         })
 
-        it('does nothing if some populate data on item does not exist', function (done) {
+        it('does nothing if some populate data on item does not exist', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -1782,16 +1688,11 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(!data.tags, 'tags have not been populated')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(!data.tags, 'tags have not been populated')
         })
 
-        it('populates from local keys dot notation', function (done) {
+        it('populates from local keys dot notation', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -1821,16 +1722,11 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              assert(result.meta.posts.length === 3, 'posts should have been populated')
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          assert(result.meta.posts.length === 3, 'posts should have been populated')
         })
 
-        it('populates from local keys', function (done) {
+        it('populates from local keys', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -1858,16 +1754,11 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              assert(result.posts.length, 'posts should have been populated')
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          assert(result.posts.length, 'posts should have been populated')
         })
 
-        it('populates from foreign keys', function (done) {
+        it('populates from foreign keys', async () => {
           const options = {
             include: {
               // from: 'posts',
@@ -1895,20 +1786,15 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              assert(result.users, 'should have users property')
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          assert(result.users, 'should have users property')
         })
 
-        it.skip('handles missing _id on create', function (done) {})
+        it.skip('handles missing _id on create', async () => {})
       })
 
-      describe('Multiple Relationship:', function () {
-        it('as object', function (done) {
+      describe('Multiple Relationship:', () => {
+        it('as object', async () => {
           const options = {
             include: [
               {
@@ -1949,19 +1835,15 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              assert(result.data.post, 'post should have been populated')
-              assert(!Array.isArray(result.data.post), 'post should not be an array')
-              assert(result.data.post.id === '111', 'post has correct id')
-              assert(Array.isArray(result.data.tags), 'tags is an array')
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          const { data } = result
+          assert(data.post, 'post should have been populated')
+          assert(!Array.isArray(data.post), 'post should not be an array')
+          assert(data.post.id === '111', 'post has correct id')
+          assert(Array.isArray(data.tags), 'tags is an array')
         })
 
-        it('as object when array', function (done) {
+        it('as object when array', async () => {
           const options = {
             include: [
               {
@@ -2002,19 +1884,14 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              assert(result.data.post, 'post should have been populated')
-              assert(!Array.isArray(result.data.post), 'post should not be an array')
-              assert(result.data.post.id === '111', 'post has correct id')
-              assert(Array.isArray(result.data.tags), 'tags is an array')
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          assert(result.data.post, 'post should have been populated')
+          assert(!Array.isArray(result.data.post), 'post should not be an array')
+          assert(result.data.post.id === '111', 'post has correct id')
+          assert(Array.isArray(result.data.tags), 'tags is an array')
         })
 
-        it('does nothing if some populate data on item does not exist', function (done) {
+        it('does nothing if some populate data on item does not exist', async () => {
           const options = {
             include: [
               {
@@ -2049,17 +1926,12 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data.tags.length === 2, 'tags have been populated')
-              assert(!data.posts, 'posts have not been populated')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data.tags.length === 2, 'tags have been populated')
+          assert(!data.posts, 'posts have not been populated')
         })
 
-        it('populates from local keys dot notation', function (done) {
+        it('populates from local keys dot notation', async () => {
           const options = {
             include: [
               {
@@ -2097,17 +1969,12 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              assert(result.meta.posts.length === 3, 'posts should have been populated')
-              assert(result.meta.tags.length === 2, 'tags should have been populated')
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          assert(result.meta.posts.length === 3, 'posts should have been populated')
+          assert(result.meta.tags.length === 2, 'tags should have been populated')
         })
 
-        it('populates from local keys', function (done) {
+        it('populates from local keys', async () => {
           const options = {
             include: [
               {
@@ -2145,16 +2012,11 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              assert(result.posts.length, 'posts should have been populated')
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          assert(result.posts.length, 'posts should have been populated')
         })
 
-        it('populates from foreign keys', function (done) {
+        it('populates from foreign keys', async () => {
           const options = {
             include: [
               {
@@ -2188,25 +2050,18 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-
-              assert(result.users.length === 1, 'result should have correct users data')
-              assert(result.comments.length === 2, 'result should have correct comments data')
-
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          assert(result.users.length === 1, 'result should have correct users data')
+          assert(result.comments.length === 2, 'result should have correct comments data')
         })
 
-        it.skip('handles missing _id on create', function (done) {})
+        it.skip('handles missing _id on create', async () => {})
       })
     })
 
-    describe('Multiple Record:', function () {
-      describe('Single Relationship:', function () {
-        it('as object', function (done) {
+    describe('Multiple Record:', () => {
+      describe('Single Relationship:', () => {
+        it('as object', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -2249,21 +2104,19 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              assert(result.data[0].post, 'post should have been populated')
-              assert(!Array.isArray(result.data[0].post), 'post should not be an array')
-              assert(result.data[0].post.id === '111', 'post has correct id')
-              assert(result.data[1].post, 'post should have been populated')
-              assert(!Array.isArray(result.data[1].post), 'post should not be an array')
-              assert(result.data[1].post.id === '222', 'post has correct id')
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+
+          const { data } = result
+
+          assert(data[0].post, 'post should have been populated')
+          assert(!Array.isArray(data[0].post), 'post should not be an array')
+          assert(data[0].post.id === '111', 'post has correct id')
+          assert(data[1].post, 'post should have been populated')
+          assert(!Array.isArray(data[1].post), 'post should not be an array')
+          assert(data[1].post.id === '222', 'post has correct id')
         })
 
-        it('as object when array', function (done) {
+        it('as object when array', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -2301,21 +2154,17 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              assert(result.data[0].post, 'post should have been populated')
-              assert(!Array.isArray(result.data[0].post), 'post should not be an array')
-              assert(result.data[0].post.id === '111', 'post has correct id')
-              assert(result.data[1].post, 'post should have been populated')
-              assert(!Array.isArray(result.data[1].post), 'post should not be an array')
-              assert(result.data[1].post.id === '222', 'post has correct id')
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          const { data } = result
+          assert(data[0].post, 'post should have been populated')
+          assert(!Array.isArray(data[0].post), 'post should not be an array')
+          assert(data[0].post.id === '111', 'post has correct id')
+          assert(data[1].post, 'post should have been populated')
+          assert(!Array.isArray(data[1].post), 'post should not be an array')
+          assert(data[1].post.id === '222', 'post has correct id')
         })
 
-        it('does nothing if some populate data on item does not exist', function (done) {
+        it('does nothing if some populate data on item does not exist', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -2348,17 +2197,12 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(!data[0].tags, 'tags have not been populated')
-              assert(!data[1].tags, 'tags have not been populated')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(!data[0].tags, 'tags have not been populated')
+          assert(!data[1].tags, 'tags have not been populated')
         })
 
-        it('populates from local keys dot notation', function (done) {
+        it('populates from local keys dot notation', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -2397,19 +2241,12 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-
-              assert(result[0].meta.posts.length === 2, 'result[0] should have correct posts data')
-              assert(result[1].meta.posts.length === 1, 'result[1] should have correct posts data')
-
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          assert(result[0].meta.posts.length === 2, 'result[0] should have correct posts data')
+          assert(result[1].meta.posts.length === 1, 'result[1] should have correct posts data')
         })
 
-        it('populates from local keys', function (done) {
+        it('populates from local keys', async () => {
           const options = {
             include: {
               // from: 'users',
@@ -2444,19 +2281,12 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-
-              assert(result[0].posts.length === 2, 'result[0] should have correct posts data')
-              assert(result[1].posts.length === 1, 'result[1] should have correct posts data')
-
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          assert(result[0].posts.length === 2, 'result[0] should have correct posts data')
+          assert(result[1].posts.length === 1, 'result[1] should have correct posts data')
         })
 
-        it('populates from foreign keys', function (done) {
+        it('populates from foreign keys', async () => {
           const options = {
             include: {
               // from: 'posts',
@@ -2489,22 +2319,17 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              result.forEach(item => {
-                assert(item.users, 'should have users property')
-              })
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          result.forEach(item => {
+            assert(item.users, 'should have users property')
+          })
         })
 
-        it.skip('handles missing _id on create', function (done) {})
+        it.skip('handles missing _id on create', async () => {})
       })
 
-      describe('Multiple Relationship:', function () {
-        it('as object', function (done) {
+      describe('Multiple Relationship:', () => {
+        it('as object', async () => {
           const options = {
             include: [
               {
@@ -2553,26 +2378,22 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              assert(result.data[0].post, 'post should have been populated')
-              assert(!Array.isArray(result.data[0].post), 'post should not be an array')
-              assert(result.data[0].post.id === '111', 'post has correct id')
-              assert(result.data[0].tags, 'tags should have been populated')
-              assert(Array.isArray(result.data[0].tags), 'tags should be an array')
+          const { result } = await shallowPopulate(context)
+          const { data } = result
+          assert(data[0].post, 'post should have been populated')
+          assert(!Array.isArray(data[0].post), 'post should not be an array')
+          assert(data[0].post.id === '111', 'post has correct id')
+          assert(data[0].tags, 'tags should have been populated')
+          assert(Array.isArray(data[0].tags), 'tags should be an array')
 
-              assert(result.data[1].post, 'post should have been populated')
-              assert(!Array.isArray(result.data[1].post), 'post should not be an array')
-              assert(result.data[1].post.id === '222', 'post has correct id')
-              assert(result.data[1].tags, 'tags should have been populated')
-              assert(Array.isArray(result.data[1].tags), 'tags should be an array')
-              done()
-            })
-            .catch(done)
+          assert(data[1].post, 'post should have been populated')
+          assert(!Array.isArray(data[1].post), 'post should not be an array')
+          assert(data[1].post.id === '222', 'post has correct id')
+          assert(data[1].tags, 'tags should have been populated')
+          assert(Array.isArray(data[1].tags), 'tags should be an array')
         })
 
-        it('as object when array', function (done) {
+        it('as object when array', async () => {
           const options = {
             include: [
               {
@@ -2621,26 +2442,22 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              assert(result.data[0].post, 'post should have been populated')
-              assert(!Array.isArray(result.data[0].post), 'post should not be an array')
-              assert(result.data[0].post.id === '111', 'post has correct id')
-              assert(result.data[0].tags, 'tags should have been populated')
-              assert(Array.isArray(result.data[0].tags), 'tags should be an array')
+          const { result } = await shallowPopulate(context)
+          const { data } = result
+          assert(data[0].post, 'post should have been populated')
+          assert(!Array.isArray(data[0].post), 'post should not be an array')
+          assert(data[0].post.id === '111', 'post has correct id')
+          assert(data[0].tags, 'tags should have been populated')
+          assert(Array.isArray(data[0].tags), 'tags should be an array')
 
-              assert(result.data[1].post, 'post should have been populated')
-              assert(!Array.isArray(result.data[1].post), 'post should not be an array')
-              assert(result.data[1].post.id === '222', 'post has correct id')
-              assert(result.data[1].tags, 'tags should have been populated')
-              assert(Array.isArray(result.data[1].tags), 'tags should be an array')
-              done()
-            })
-            .catch(done)
+          assert(data[1].post, 'post should have been populated')
+          assert(!Array.isArray(data[1].post), 'post should not be an array')
+          assert(data[1].post.id === '222', 'post has correct id')
+          assert(data[1].tags, 'tags should have been populated')
+          assert(Array.isArray(data[1].tags), 'tags should be an array')
         })
 
-        it('does nothing if some populate data on item does not exist', function (done) {
+        it('does nothing if some populate data on item does not exist', async () => {
           const options = {
             include: [
               {
@@ -2682,19 +2499,14 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { data } = context
-              assert(data[0].tags.length === 2, 'tags have been populated')
-              assert(!data[0].posts, 'posts have not been populated')
-              assert(data[1].posts.length === 2, 'posts have been populated')
-              assert(!data[1].tags, 'tags have not been populated')
-              done()
-            })
-            .catch(done)
+          const { data } = await shallowPopulate(context)
+          assert(data[0].tags.length === 2, 'tags have been populated')
+          assert(!data[0].posts, 'posts have not been populated')
+          assert(data[1].posts.length === 2, 'posts have been populated')
+          assert(!data[1].tags, 'tags have not been populated')
         })
 
-        it('populates from local keys dot notation', function (done) {
+        it('populates from local keys dot notation', async () => {
           const options = {
             include: [
               {
@@ -2744,23 +2556,16 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              const { data } = result
+          const { result } = await shallowPopulate(context)
+          const { data } = result
+          assert(data[0].meta.posts.length === 3, 'result[0] should have correct posts data')
+          assert(data[0].meta.tags.length === 2, 'result[0] should have correct tags data')
 
-              assert(data[0].meta.posts.length === 3, 'result[0] should have correct posts data')
-              assert(data[0].meta.tags.length === 2, 'result[0] should have correct tags data')
-
-              assert(data[1].meta.posts.length === 2, 'result[1] should have correct posts data')
-              assert(data[1].meta.tags.length === 1, 'result[1] should have correct tags data')
-
-              done()
-            })
-            .catch(done)
+          assert(data[1].meta.posts.length === 2, 'result[1] should have correct posts data')
+          assert(data[1].meta.tags.length === 1, 'result[1] should have correct tags data')
         })
 
-        it('populates from local keys', function (done) {
+        it('populates from local keys', async () => {
           const options = {
             include: [
               {
@@ -2808,23 +2613,16 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-              const { data } = result
+          const { result } = await shallowPopulate(context)
+          const { data } = result
+          assert(data[0].posts.length === 3, 'result[0] should have correct posts data')
+          assert(data[0].tags.length === 2, 'result[0] should have correct tags data')
 
-              assert(data[0].posts.length === 3, 'result[0] should have correct posts data')
-              assert(data[0].tags.length === 2, 'result[0] should have correct tags data')
-
-              assert(data[1].posts.length === 2, 'result[1] should have correct posts data')
-              assert(data[1].tags.length === 1, 'result[1] should have correct tags data')
-
-              done()
-            })
-            .catch(done)
+          assert(data[1].posts.length === 2, 'result[1] should have correct posts data')
+          assert(data[1].tags.length === 1, 'result[1] should have correct tags data')
         })
 
-        it('populates from foreign keys', function (done) {
+        it('populates from foreign keys', async () => {
           const options = {
             include: [
               {
@@ -2868,22 +2666,15 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
+          const { result } = await shallowPopulate(context)
+          assert(result[0].users.length === 1, 'result[0] should have correct users data')
+          assert(result[0].comments.length === 2, 'result[0] should have correct comments data')
 
-              assert(result[0].users.length === 1, 'result[0] should have correct users data')
-              assert(result[0].comments.length === 2, 'result[0] should have correct comments data')
-
-              assert(result[1].users.length === 2, 'result[1] should have correct users data')
-              assert(result[1].comments.length === 2, 'result[1] should have correct comments data')
-
-              done()
-            })
-            .catch(done)
+          assert(result[1].users.length === 2, 'result[1] should have correct users data')
+          assert(result[1].comments.length === 2, 'result[1] should have correct comments data')
         })
 
-        it('populates from nested foreign keys', function (done) {
+        it('populates from nested foreign keys', async () => {
           const options = {
             include: [
               {
@@ -2913,21 +2704,14 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-
-              assert(result[0].tasks.length === 1, 'result[0] should have correct users data')
-              assert(result[1].tasks.length === 2, 'result[1] should have correct comments data')
-              assert(result[2].tasks.length === 3, 'result[2] should have correct comments data')
-              assert(result[3].tasks.length === 1, 'result[3] should have correct comments data')
-
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          assert(result[0].tasks.length === 1, 'result[0] should have correct users data')
+          assert(result[1].tasks.length === 2, 'result[1] should have correct comments data')
+          assert(result[2].tasks.length === 3, 'result[2] should have correct comments data')
+          assert(result[3].tasks.length === 1, 'result[3] should have correct comments data')
         })
 
-        it('populates from nested keyHere', function (done) {
+        it('populates from nested keyHere', async () => {
           const options = {
             include: [
               {
@@ -2961,20 +2745,13 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-
-              result.forEach(r => {
-                assert.strictEqual(r.taskSet.taskSetId, r.taskSetData.id, 'got correct record')
-              })
-
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          result.forEach(r => {
+            assert.strictEqual(r.taskSet.taskSetId, r.taskSetData.id, 'got correct record')
+          })
         })
 
-        it('populates from nested array', function (done) {
+        it('populates from nested array', async () => {
           const options = {
             include: [
               {
@@ -3004,25 +2781,18 @@ describe('shallowPopulate hook', function () {
 
           const shallowPopulate = makePopulate(options)
 
-          shallowPopulate(context)
-            .then(context => {
-              const { result } = context
-
-              result.forEach(r => {
-                if (r.id === 'org1') {
-                  assert(r.envs.length === 3, 'org1 should have two environments')
-                  assert(r.envs[0].orgs[0].orgId === 'org1', 'should have at least one environment populated')
-                } else if (r.id === 'org2') {
-                  assert(r.envs.length === 1, 'org2 should have one environment')
-                }
-              })
-
-              done()
-            })
-            .catch(done)
+          const { result } = await shallowPopulate(context)
+          result.forEach(r => {
+            if (r.id === 'org1') {
+              assert(r.envs.length === 3, 'org1 should have two environments')
+              assert(r.envs[0].orgs[0].orgId === 'org1', 'should have at least one environment populated')
+            } else if (r.id === 'org2') {
+              assert(r.envs.length === 1, 'org2 should have one environment')
+            }
+          })
         })
 
-        it.skip('handles missing _id on create', function (done) {})
+        it.skip('handles missing _id on create', async () => {})
       })
     })
   })
