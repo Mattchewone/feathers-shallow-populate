@@ -206,6 +206,15 @@ describe('shallowPopulate hook', () => {
             keyThere: 'id',
             params: {}
           }
+        },
+        {
+          include: {
+            service: 'posts',
+            nameAs: 'posts',
+            keyThere: 'id',
+            requestPerItem: true,
+            params: {}
+          }
         }
       ]
 
@@ -1817,6 +1826,23 @@ describe('shallowPopulate hook', () => {
                       },
                       { query: { $select: ['id'] } }
                     ]
+                  },
+                  {
+                    // from: 'posts',
+                    service: 'tasks',
+                    nameAs: 'nullTask',
+                    asArray: false,
+                    params: function (params, context) {
+                      return undefined
+                    }
+                  },
+                  {
+                    // from: 'posts',
+                    service: 'tasks',
+                    nameAs: 'emptyTasks',
+                    params: function (params, context) {
+                      return undefined
+                    }
                   }
                 ]
               }
@@ -1849,6 +1875,8 @@ describe('shallowPopulate hook', () => {
               assert.deepStrictEqual(data.tags, expectedTags, 'tags populated correctly')
               assert.deepStrictEqual(data.org, expectedOrg, 'populated org correctly')
               assert.deepStrictEqual(data.tag, expectedTag, 'single tag populated correctly')
+              assert(data.nullTask === null, 'set default to null')
+              assert.deepStrictEqual(data.emptyTasks, [], 'set default to empty array')
             })
           })
 
@@ -2648,6 +2676,23 @@ describe('shallowPopulate hook', () => {
                       },
                       { query: { $select: ['id'] } }
                     ]
+                  },
+                  {
+                    // from: 'posts',
+                    service: 'tasks',
+                    nameAs: 'nullTask',
+                    asArray: false,
+                    params: function (params, context) {
+                      return undefined
+                    }
+                  },
+                  {
+                    // from: 'posts',
+                    service: 'tasks',
+                    nameAs: 'emptyTasks',
+                    params: function (params, context) {
+                      return undefined
+                    }
                   }
                 ]
               }
@@ -2678,6 +2723,8 @@ describe('shallowPopulate hook', () => {
                 assert.deepStrictEqual(post.tags, expectedTags, 'tags populated correctly')
                 assert.deepStrictEqual(post.org, expectedOrg, 'populated org correctly')
                 assert.deepStrictEqual(post.tag, expectedTag, 'single tag populated correctly')
+                assert(post.nullTask === null, 'set default to null')
+                assert.deepStrictEqual(post.emptyTasks, [], 'set default to empty array')
               })
             })
           })
@@ -3362,6 +3409,23 @@ describe('shallowPopulate hook', () => {
                       },
                       { query: { $select: ['id'] } }
                     ]
+                  },
+                  {
+                    // from: 'posts',
+                    service: 'tasks',
+                    nameAs: 'nullTask',
+                    asArray: false,
+                    params: function (params, context) {
+                      return undefined
+                    }
+                  },
+                  {
+                    // from: 'posts',
+                    service: 'tasks',
+                    nameAs: 'emptyTasks',
+                    params: function (params, context) {
+                      return undefined
+                    }
                   }
                 ]
               }
@@ -3394,6 +3458,8 @@ describe('shallowPopulate hook', () => {
               assert.deepStrictEqual(result.tags, expectedTags, 'tags populated correctly')
               assert.deepStrictEqual(result.org, expectedOrg, 'populated org correctly')
               assert.deepStrictEqual(result.tag, expectedTag, 'single tag populated correctly')
+              assert(result.nullTask === null, 'set default to null')
+              assert.deepStrictEqual(result.emptyTasks, [], 'set default to empty array')
             })
           })
 
@@ -4360,6 +4426,23 @@ describe('shallowPopulate hook', () => {
                       },
                       { query: { $select: ['id'] } }
                     ]
+                  },
+                  {
+                    // from: 'posts',
+                    service: 'tasks',
+                    nameAs: 'nullTask',
+                    asArray: false,
+                    params: function (params, context) {
+                      return undefined
+                    }
+                  },
+                  {
+                    // from: 'posts',
+                    service: 'tasks',
+                    nameAs: 'emptyTasks',
+                    params: function (params, context) {
+                      return undefined
+                    }
                   }
                 ]
               }
@@ -4390,6 +4473,8 @@ describe('shallowPopulate hook', () => {
                 assert.deepStrictEqual(post.tags, expectedTags, 'tags populated correctly')
                 assert.deepStrictEqual(post.org, expectedOrg, 'populated org correctly')
                 assert.deepStrictEqual(post.tag, expectedTag, 'single tag populated correctly')
+                assert(post.nullTask === null, 'set default to null')
+                assert.deepStrictEqual(post.emptyTasks, [], 'set default to empty array')
               })
             })
           })
