@@ -550,6 +550,7 @@ describe('shallowPopulate hook', () => {
                 await new Promise(resolve => { setTimeout(resolve, 500) })
                 params.calledAsyncFunction = true
                 calledAsyncFunction = true
+                return params
               }
             }
           }
@@ -704,6 +705,7 @@ describe('shallowPopulate hook', () => {
               nameAs: 'posts',
               params: (params, context) => {
                 assert.deepStrictEqual(params, expected, 'params just have paginate attribute')
+                return params
               }
             }
           }
@@ -729,31 +731,18 @@ describe('shallowPopulate hook', () => {
           }, 'does not throw error')
         })
 
-        it('access `this` keyword in custom params-function which matches the data item', async () => {
-          let paramsFunctionCalled = false
-
-          const item = {
-            id: '11',
-            name: 'Dumb Stuff',
-            meta: {
-              postsId: ['111', '222', '333', 444, 555, '666']
-            }
-          }
-
+        it('skip request if params returns undefined', async () => {
           const options = {
             include: {
+              // from: 'users',
               service: 'posts',
               nameAs: 'posts',
-              params: function (params, context) {
-                assert(this === item, 'item from data is passed as `this` keyword')
-                assert(context.method === 'create', 'we can pass the context to include')
-                params.method = context.method
-                paramsFunctionCalled = true
-              }
+              params: () => {}
             }
           }
 
           let hasCalledFind = false
+
           const context = {
             method: 'create',
             type: 'after',
@@ -761,7 +750,6 @@ describe('shallowPopulate hook', () => {
               service () {
                 return {
                   find (params = {}) {
-                    assert(params.method === 'create', 'we can manipulate the params based on the context')
                     hasCalledFind = true
                     return []
                   }
@@ -769,14 +757,15 @@ describe('shallowPopulate hook', () => {
               }
             },
             params: {},
-            result: item
+            result: {
+              id: '1'
+            }
           }
 
           const shallowPopulate = makePopulate(options)
 
           await shallowPopulate(context)
-          assert(paramsFunctionCalled, 'params function was called')
-          assert(hasCalledFind, 'checks were made')
+          assert(!hasCalledFind, 'skip request if params function returns undefined')
         })
 
         it('can pass in custom params-function which overrides params', async () => {
@@ -787,6 +776,7 @@ describe('shallowPopulate hook', () => {
               nameAs: 'posts',
               params: (params, context) => {
                 params.query = { id: 1 }
+                return params
               }
             }
           }
@@ -870,6 +860,7 @@ describe('shallowPopulate hook', () => {
                 assert(context.method === 'create', 'we can pass the context to include')
                 params.method = context.method
                 paramsFunctionCalled = true
+                return params
               }
             }
           }
@@ -894,6 +885,57 @@ describe('shallowPopulate hook', () => {
             result: {
               id: '1'
             }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          await shallowPopulate(context)
+          assert(paramsFunctionCalled, 'params function was called')
+          assert(hasCalledFind, 'checks were made')
+        })
+
+        it('access `this` keyword in custom params-function which matches the data item', async () => {
+          let paramsFunctionCalled = false
+
+          const item = {
+            id: '11',
+            name: 'Dumb Stuff',
+            meta: {
+              postsId: ['111', '222', '333', 444, 555, '666']
+            }
+          }
+
+          const options = {
+            include: {
+              service: 'posts',
+              nameAs: 'posts',
+              params: function (params, context) {
+                assert(this === item, 'item from data is passed as `this` keyword')
+                assert(context.method === 'create', 'we can pass the context to include')
+                params.method = context.method
+                paramsFunctionCalled = true
+                return params
+              }
+            }
+          }
+
+          let hasCalledFind = false
+          const context = {
+            method: 'create',
+            type: 'after',
+            app: {
+              service () {
+                return {
+                  find (params = {}) {
+                    assert(params.method === 'create', 'we can manipulate the params based on the context')
+                    hasCalledFind = true
+                    return []
+                  }
+                }
+              }
+            },
+            params: {},
+            result: item
           }
 
           const shallowPopulate = makePopulate(options)
@@ -929,6 +971,7 @@ describe('shallowPopulate hook', () => {
                 nameAs: 'users',
                 params: () => {
                   calledUsersParamsNTimes++
+                  return {}
                 }
               },
               {
@@ -936,6 +979,7 @@ describe('shallowPopulate hook', () => {
                 nameAs: 'comments',
                 params: () => {
                   calledCommentsParamsNTimes++
+                  return {}
                 }
               }
             ]
@@ -969,6 +1013,7 @@ describe('shallowPopulate hook', () => {
                 await new Promise(resolve => { setTimeout(resolve, 500) })
                 params.calledAsyncFunction = true
                 calledAsyncFunction = true
+                return params
               }
             }
           }
@@ -1026,6 +1071,7 @@ describe('shallowPopulate hook', () => {
                   (params) => {
                     assert(params.query.second, 'walked through before')
                     params.third = true
+                    return params
                   },
                   (params) => {
                     assert(params.third, 'walked through before')
@@ -1035,6 +1081,7 @@ describe('shallowPopulate hook', () => {
                     assert(params.query.fourth, 'walked through before')
                     await new Promise(resolve => setTimeout(resolve, 500))
                     params.fifth = true
+                    return params
                   },
                   (params, context) => {
                     assert(params.fifth, 'walked through before')
@@ -1045,6 +1092,7 @@ describe('shallowPopulate hook', () => {
                   (params) => {
                     assert.deepStrictEqual(params, expected, 'params object is right')
                     calledLastFunction = true
+                    return params
                   }
                 ]
               }
@@ -1753,6 +1801,22 @@ describe('shallowPopulate hook', () => {
                       const user = await context.app.service('users').get(this.userId)
                       return { query: { id: user.orgId } }
                     }
+                  },
+                  {
+                    // from: 'posts',
+                    service: 'tags',
+                    nameAs: 'tag',
+                    asArray: false,
+                    params: [
+                      function (params, context) {
+                        return {
+                          query: {
+                            userId: this.userId
+                          }
+                        }
+                      },
+                      { query: { $select: ['id'] } }
+                    ]
                   }
                 ]
               }
@@ -1780,10 +1844,11 @@ describe('shallowPopulate hook', () => {
               const expectedTags = Object.values(services.tags.store).filter(x => x.userId === data.userId).map(x => { return { id: x.id } })
               const user = Object.values(services.users.store).filter(x => x.id === data.userId)[0]
               const expectedOrg = Object.values(services.orgs.store).filter(x => x.id === user.orgId)[0]
-
+              const expectedTag = expectedTags[0]
               assert.deepStrictEqual(data.tasks, expectedTasks, 'tasks populated correctly')
               assert.deepStrictEqual(data.tags, expectedTags, 'tags populated correctly')
               assert.deepStrictEqual(data.org, expectedOrg, 'populated org correctly')
+              assert.deepStrictEqual(data.tag, expectedTag, 'single tag populated correctly')
             })
           })
 
@@ -2567,6 +2632,22 @@ describe('shallowPopulate hook', () => {
                       const user = await context.app.service('users').get(this.userId)
                       return { query: { id: user.orgId } }
                     }
+                  },
+                  {
+                    // from: 'posts',
+                    service: 'tags',
+                    nameAs: 'tag',
+                    asArray: false,
+                    params: [
+                      function (params, context) {
+                        return {
+                          query: {
+                            userId: this.userId
+                          }
+                        }
+                      },
+                      { query: { $select: ['id'] } }
+                    ]
                   }
                 ]
               }
@@ -2592,9 +2673,11 @@ describe('shallowPopulate hook', () => {
                 const expectedTags = Object.values(services.tags.store).filter(x => x.userId === post.userId).map(x => { return { id: x.id } })
                 const user = Object.values(services.users.store).filter(x => x.id === post.userId)[0]
                 const expectedOrg = Object.values(services.orgs.store).filter(x => x.id === user.orgId)[0]
+                const expectedTag = expectedTags[0]
                 assert.deepStrictEqual(post.tasks, expectedTasks, 'tasks populated correctly')
                 assert.deepStrictEqual(post.tags, expectedTags, 'tags populated correctly')
                 assert.deepStrictEqual(post.org, expectedOrg, 'populated org correctly')
+                assert.deepStrictEqual(post.tag, expectedTag, 'single tag populated correctly')
               })
             })
           })
@@ -3263,6 +3346,22 @@ describe('shallowPopulate hook', () => {
                       const user = await context.app.service('users').get(this.userId)
                       return { query: { id: user.orgId } }
                     }
+                  },
+                  {
+                    // from: 'posts',
+                    service: 'tags',
+                    nameAs: 'tag',
+                    asArray: false,
+                    params: [
+                      function (params, context) {
+                        return {
+                          query: {
+                            userId: this.userId
+                          }
+                        }
+                      },
+                      { query: { $select: ['id'] } }
+                    ]
                   }
                 ]
               }
@@ -3290,9 +3389,11 @@ describe('shallowPopulate hook', () => {
               const expectedTags = Object.values(services.tags.store).filter(x => x.userId === result.userId).map(x => { return { id: x.id } })
               const user = Object.values(services.users.store).filter(x => x.id === result.userId)[0]
               const expectedOrg = Object.values(services.orgs.store).filter(x => x.id === user.orgId)[0]
+              const expectedTag = expectedTags[0]
               assert.deepStrictEqual(result.tasks, expectedTasks, 'tasks populated correctly')
               assert.deepStrictEqual(result.tags, expectedTags, 'tags populated correctly')
               assert.deepStrictEqual(result.org, expectedOrg, 'populated org correctly')
+              assert.deepStrictEqual(result.tag, expectedTag, 'single tag populated correctly')
             })
           })
 
@@ -4243,6 +4344,22 @@ describe('shallowPopulate hook', () => {
                       const user = await context.app.service('users').get(this.userId)
                       return { query: { id: user.orgId } }
                     }
+                  },
+                  {
+                    // from: 'posts',
+                    service: 'tags',
+                    nameAs: 'tag',
+                    asArray: false,
+                    params: [
+                      function (params, context) {
+                        return {
+                          query: {
+                            userId: this.userId
+                          }
+                        }
+                      },
+                      { query: { $select: ['id'] } }
+                    ]
                   }
                 ]
               }
@@ -4268,9 +4385,11 @@ describe('shallowPopulate hook', () => {
                 const expectedTags = Object.values(services.tags.store).filter(x => x.userId === post.userId).map(x => { return { id: x.id } })
                 const user = Object.values(services.users.store).filter(x => x.id === post.userId)[0]
                 const expectedOrg = Object.values(services.orgs.store).filter(x => x.id === user.orgId)[0]
+                const expectedTag = expectedTags[0]
                 assert.deepStrictEqual(post.tasks, expectedTasks, 'tasks populated correctly')
                 assert.deepStrictEqual(post.tags, expectedTags, 'tags populated correctly')
                 assert.deepStrictEqual(post.org, expectedOrg, 'populated org correctly')
+                assert.deepStrictEqual(post.tag, expectedTag, 'single tag populated correctly')
               })
             })
           })
