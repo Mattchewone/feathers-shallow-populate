@@ -132,6 +132,17 @@ const services = {
   })
 }
 
+const beforeAfter = [
+  {
+    type: 'before',
+    dataResult: 'data'
+  },
+  {
+    type: 'after',
+    dataResult: 'result'
+  }
+]
+
 describe('shallowPopulate hook', () => {
   describe('general', () => {
     it('throws when used without an includes object', () => {
@@ -249,461 +260,484 @@ describe('shallowPopulate hook', () => {
     })
 
     it('does nothing if we have no data', async () => {
-      const options = {
-        include: {
+      for (const { type, dataResult } of beforeAfter) {
+        const options = {
+          include: {
           // from: 'users',
-          service: 'posts',
-          nameAs: 'posts',
-          keyHere: 'postsId',
-          keyThere: 'id'
+            service: 'posts',
+            nameAs: 'posts',
+            keyHere: 'postsId',
+            keyThere: 'id'
+          }
         }
-      }
 
-      const context = {
-        method: 'create',
-        type: 'after',
-        params: {},
-        result: {
-          data: []
+        const context = {
+          app: {
+            service (path) {
+              return services[path]
+            }
+          },
+          method: 'create',
+          type,
+          params: {},
+          [dataResult]: {}
         }
+
+        const shallowPopulate = makePopulate(options)
+        const response = await shallowPopulate(context)
+        const result = response[dataResult]
+
+        assert.deepStrictEqual(result, context[dataResult], 'data should not be touched')
       }
-
-      const shallowPopulate = makePopulate(options)
-
-      const { result } = await shallowPopulate(context)
-
-      assert.deepStrictEqual(result.data, context.result.data, 'data should not be touched')
     })
 
     describe('params', () => {
       describe('params - requestPerItem: false', () => {
         it('can pass in custom params for lookup', async () => {
-          const options = {
-            include: {
+          for (const { type, dataResult } of beforeAfter) {
+            const options = {
+              include: {
               // from: 'users',
-              service: 'posts',
-              nameAs: 'posts',
-              keyHere: 'postsId',
-              keyThere: 'id',
-              params: { fromCommentsPopulate: true }
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id',
+                params: { fromCommentsPopulate: true }
+              }
             }
-          }
 
-          let hasCalledFind = false
+            let hasCalledFind = false
 
-          const context = {
-            method: 'create',
-            type: 'after',
-            app: {
-              service () {
-                return {
-                  find (params = {}) {
-                    assert(params.fromCommentsPopulate === true, 'we have a custom param')
-                    hasCalledFind = true
-                    return []
+            const context = {
+              method: 'create',
+              type,
+              app: {
+                service () {
+                  return {
+                    find (params = {}) {
+                      assert(params.fromCommentsPopulate === true, 'we have a custom param')
+                      hasCalledFind = true
+                      return []
+                    }
                   }
                 }
+              },
+              params: {},
+              [dataResult]: {
+                id: '1'
               }
-            },
-            params: {},
-            result: {
-              id: '1'
             }
+
+            const shallowPopulate = makePopulate(options)
+
+            await shallowPopulate(context)
+            assert(hasCalledFind, 'checks were made')
           }
-
-          const shallowPopulate = makePopulate(options)
-
-          await shallowPopulate(context)
-          assert(hasCalledFind, 'checks were made')
         })
 
         it('can pass in custom params for lookup and merges them deeply', async () => {
-          const options = {
-            include: {
+          for (const { type, dataResult } of beforeAfter) {
+            const options = {
+              include: {
               // from: 'users',
-              service: 'posts',
-              nameAs: 'posts',
-              keyHere: 'postsId',
-              keyThere: 'id',
-              params: { query: { $select: ['id'] } }
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id',
+                params: { query: { $select: ['id'] } }
+              }
             }
-          }
 
-          let hasCalledFind = false
+            let hasCalledFind = false
 
-          const context = {
-            method: 'create',
-            type: 'after',
-            app: {
-              service () {
-                return {
-                  find (params = {}) {
-                    assert.deepStrictEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
-                    assert.deepStrictEqual(params.query.$select, ['id'], 'we have a merged query')
-                    hasCalledFind = true
-                    return []
+            const context = {
+              method: 'create',
+              type,
+              app: {
+                service () {
+                  return {
+                    find (params = {}) {
+                      assert.deepStrictEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
+                      assert.deepStrictEqual(params.query.$select, ['id'], 'we have a merged query')
+                      hasCalledFind = true
+                      return []
+                    }
                   }
                 }
+              },
+              params: {},
+              [dataResult]: {
+                id: '1'
               }
-            },
-            params: {},
-            result: {
-              id: '1'
             }
+
+            const shallowPopulate = makePopulate(options)
+
+            await shallowPopulate(context)
+            assert(hasCalledFind, 'checks were made')
           }
-
-          const shallowPopulate = makePopulate(options)
-
-          await shallowPopulate(context)
-          assert(hasCalledFind, 'checks were made')
         })
 
         it('can pass in custom params-function which overrides params', async () => {
-          const options = {
-            include: {
+          for (const { type, dataResult } of beforeAfter) {
+            const options = {
+              include: {
               // from: 'users',
-              service: 'posts',
-              nameAs: 'posts',
-              keyHere: 'postsId',
-              keyThere: 'id',
-              params: (params, context) => {
-                assert.deepStrictEqual(params.query.id.$in, [], 'we have the params from shallow-populate first')
-                params.query.$select = ['id']
-              }
-            }
-          }
-
-          let hasCalledFind = false
-
-          const context = {
-            method: 'create',
-            type: 'after',
-            app: {
-              service () {
-                return {
-                  find (params = {}) {
-                    assert.deepStrictEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
-                    assert.deepStrictEqual(params.query.$select, ['id'], 'we have a merged query')
-                    hasCalledFind = true
-                    return []
-                  }
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id',
+                params: (params, context) => {
+                  assert.deepStrictEqual(params.query.id.$in, [], 'we have the params from shallow-populate first')
+                  params.query.$select = ['id']
                 }
               }
-            },
-            params: {},
-            result: {
-              id: '1'
             }
+
+            let hasCalledFind = false
+
+            const context = {
+              method: 'create',
+              type,
+              app: {
+                service () {
+                  return {
+                    find (params = {}) {
+                      assert.deepStrictEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
+                      assert.deepStrictEqual(params.query.$select, ['id'], 'we have a merged query')
+                      hasCalledFind = true
+                      return []
+                    }
+                  }
+                }
+              },
+              params: {},
+              [dataResult]: {
+                id: '1'
+              }
+            }
+
+            const shallowPopulate = makePopulate(options)
+
+            await shallowPopulate(context)
+            assert(hasCalledFind, 'checks were made')
           }
-
-          const shallowPopulate = makePopulate(options)
-
-          await shallowPopulate(context)
-          assert(hasCalledFind, 'checks were made')
         })
 
         it('can pass in custom params-function which returns params and merges them deeply', async () => {
-          const options = {
-            include: {
+          for (const { type, dataResult } of beforeAfter) {
+            const options = {
+              include: {
               // from: 'users',
-              service: 'posts',
-              nameAs: 'posts',
-              keyHere: 'postsId',
-              keyThere: 'id',
-              params: () => { return { query: { $select: ['id'] } } }
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id',
+                params: () => { return { query: { $select: ['id'] } } }
+              }
             }
-          }
 
-          let hasCalledFind = false
+            let hasCalledFind = false
 
-          const context = {
-            method: 'create',
-            type: 'after',
-            app: {
-              service () {
-                return {
-                  find (params = {}) {
-                    assert.deepStrictEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
-                    assert.deepStrictEqual(params.query.$select, ['id'], 'we have a merged query')
-                    hasCalledFind = true
-                    return []
+            const context = {
+              method: 'create',
+              type,
+              app: {
+                service () {
+                  return {
+                    find (params = {}) {
+                      assert.deepStrictEqual(params.query.id.$in, [], 'we have the params from shallow-populate')
+                      assert.deepStrictEqual(params.query.$select, ['id'], 'we have a merged query')
+                      hasCalledFind = true
+                      return []
+                    }
                   }
                 }
+              },
+              params: {},
+              [dataResult]: {
+                id: '1'
               }
-            },
-            params: {},
-            result: {
-              id: '1'
             }
+
+            const shallowPopulate = makePopulate(options)
+
+            await shallowPopulate(context)
+            assert(hasCalledFind, 'checks were made')
           }
-
-          const shallowPopulate = makePopulate(options)
-
-          await shallowPopulate(context)
-          assert(hasCalledFind, 'checks were made')
         })
 
         it('can pass in custom params-function with context', async () => {
-          let paramsFunctionCalled = false
+          for (const { type, dataResult } of beforeAfter) {
+            let paramsFunctionCalled = false
 
-          const options = {
-            include: {
-              service: 'posts',
-              nameAs: 'posts',
-              keyHere: 'postsId',
-              keyThere: 'id',
-              params: (params, context) => {
-                assert(context.method === 'create', 'we can pass the context to include')
-                params.method = context.method
-                paramsFunctionCalled = true
-              }
-            }
-          }
-
-          let hasCalledFind = false
-
-          const context = {
-            method: 'create',
-            type: 'after',
-            app: {
-              service () {
-                return {
-                  find (params = {}) {
-                    assert(params.method === 'create', 'we can manipulate the params based on the context')
-                    hasCalledFind = true
-                    return []
-                  }
+            const options = {
+              include: {
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id',
+                params: (params, context) => {
+                  assert(context.method === 'create', 'we can pass the context to include')
+                  params.method = context.method
+                  paramsFunctionCalled = true
                 }
               }
-            },
-            params: {},
-            result: {
-              id: '1'
             }
+
+            let hasCalledFind = false
+
+            const context = {
+              method: 'create',
+              type,
+              app: {
+                service () {
+                  return {
+                    find (params = {}) {
+                      assert(params.method === 'create', 'we can manipulate the params based on the context')
+                      hasCalledFind = true
+                      return []
+                    }
+                  }
+                }
+              },
+              params: {},
+              [dataResult]: {
+                id: '1'
+              }
+            }
+
+            const shallowPopulate = makePopulate(options)
+
+            await shallowPopulate(context)
+            assert(paramsFunctionCalled, 'params function was called')
+            assert(hasCalledFind, 'checks were made')
           }
-
-          const shallowPopulate = makePopulate(options)
-
-          await shallowPopulate(context)
-          assert(paramsFunctionCalled, 'params function was called')
-          assert(hasCalledFind, 'checks were made')
         })
 
         it('calls params-function once even for multiple records', async () => {
-          let calledIncludeUsersParams = false
-          let calledIncludeCommentsParams = false
+          for (const { type, dataResult } of beforeAfter) {
+            let calledIncludeUsersParams = false
+            let calledIncludeCommentsParams = false
 
-          const options = {
-            include: [
-              {
-                service: 'users',
-                nameAs: 'users',
-                keyHere: 'id',
-                keyThere: 'postsId',
-                params: () => {
-                  assert(!calledIncludeUsersParams, 'not called before -> only called once')
-                  calledIncludeUsersParams = true
+            const options = {
+              include: [
+                {
+                  service: 'users',
+                  nameAs: 'users',
+                  keyHere: 'id',
+                  keyThere: 'postsId',
+                  params: () => {
+                    assert(!calledIncludeUsersParams, 'not called before -> only called once')
+                    calledIncludeUsersParams = true
+                  }
+                },
+                {
+                  service: 'comments',
+                  nameAs: 'comments',
+                  keyHere: 'id',
+                  keyThere: 'postsId',
+                  params: () => {
+                    assert(!calledIncludeCommentsParams, 'not called before -> only called once')
+                    calledIncludeCommentsParams = true
+                  }
+                }
+              ]
+            }
+            const context = {
+              app: {
+                service (path) {
+                  return services[path]
                 }
               },
-              {
-                service: 'comments',
-                nameAs: 'comments',
-                keyHere: 'id',
-                keyThere: 'postsId',
-                params: () => {
-                  assert(!calledIncludeCommentsParams, 'not called before -> only called once')
-                  calledIncludeCommentsParams = true
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: [
+                {
+                  id: '333',
+                  name: 'If I were a banana...'
+                },
+                {
+                  id: '111',
+                  name: 'My Monkey and Me'
+                },
+                {
+                  id: 444,
+                  name: 'One, two, three, one, two, three, drink'
                 }
-              }
-            ]
-          }
-          const context = {
-            app: {
-              service (path) {
-                return services[path]
-              }
-            },
-            method: 'create',
-            type: 'after',
-            params: {},
-            result: [
-              {
-                id: '333',
-                name: 'If I were a banana...'
-              },
-              {
-                id: '111',
-                name: 'My Monkey and Me'
-              },
-              {
-                id: 444,
-                name: 'One, two, three, one, two, three, drink'
-              }
-            ]
-          }
+              ]
+            }
 
-          const shallowPopulate = makePopulate(options)
+            const shallowPopulate = makePopulate(options)
 
-          await shallowPopulate(context)
-          assert(calledIncludeUsersParams, 'params function for users was called')
-          assert(calledIncludeCommentsParams, 'params function for comments was called')
+            await shallowPopulate(context)
+            assert(calledIncludeUsersParams, 'params function for users was called')
+            assert(calledIncludeCommentsParams, 'params function for comments was called')
+          }
         })
 
         it('wait for params function that returns a promise', async () => {
-          let calledAsyncFunction = false
-          const options = {
-            include: {
-              service: 'posts',
-              nameAs: 'posts',
-              params: async (params, context) => {
-                await new Promise(resolve => { setTimeout(resolve, 500) })
-                params.calledAsyncFunction = true
-                calledAsyncFunction = true
-                return params
-              }
-            }
-          }
-
-          let hasCalledFind = false
-
-          const context = {
-            method: 'create',
-            type: 'after',
-            app: {
-              service () {
-                return {
-                  find (params = {}) {
-                    assert(params.calledAsyncFunction, 'waited for async params function before find')
-                    hasCalledFind = true
-                    return []
-                  }
+          for (const { type, dataResult } of beforeAfter) {
+            let calledAsyncFunction = false
+            const options = {
+              include: {
+                service: 'posts',
+                nameAs: 'posts',
+                params: async (params, context) => {
+                  await new Promise(resolve => { setTimeout(resolve, 200) })
+                  params.calledAsyncFunction = true
+                  calledAsyncFunction = true
+                  return params
                 }
               }
-            },
-            params: {},
-            result: {
-              id: '1'
             }
-          }
 
-          const shallowPopulate = makePopulate(options)
-          await shallowPopulate(context)
-          assert(calledAsyncFunction, 'waited for async params function')
-          assert(hasCalledFind, 'checks were made')
+            let hasCalledFind = false
+
+            const context = {
+              method: 'create',
+              type,
+              app: {
+                service () {
+                  return {
+                    find (params = {}) {
+                      assert(params.calledAsyncFunction, 'waited for async params function before find')
+                      hasCalledFind = true
+                      return []
+                    }
+                  }
+                }
+              },
+              params: {},
+              [dataResult]: {
+                id: '1'
+              }
+            }
+
+            const shallowPopulate = makePopulate(options)
+            await shallowPopulate(context)
+            assert(calledAsyncFunction, 'waited for async params function')
+            assert(hasCalledFind, 'checks were made')
+          }
         })
 
         it('can pass in params as array', async () => {
-          let calledLastFunction = false
+          for (const { type, dataResult } of beforeAfter) {
+            let calledLastFunction = false
 
-          const expected = {
-            paginate: false,
-            query: {
-              postsId: { $in: ['1'] },
-              second: true,
-              fourth: true
-            },
-            third: true,
-            fifth: true,
-            sixth: true
-          }
+            const expected = {
+              paginate: false,
+              query: {
+                postsId: { $in: ['1'] },
+                second: true,
+                fourth: true
+              },
+              third: true,
+              fifth: true,
+              sixth: true
+            }
 
-          const options = {
-            include: [
-              {
-                service: 'users',
-                nameAs: 'users',
-                keyHere: 'id',
-                keyThere: 'postsId',
-                params: [
-                  {},
-                  { query: { second: true } },
-                  (params) => {
-                    assert(params.query.second, 'walked through before')
-                    params.third = true
-                  },
-                  (params) => {
-                    assert(params.third, 'walked through before')
-                    return { query: { fourth: true } }
-                  },
-                  async (params) => {
-                    assert(params.query.fourth, 'walked through before')
-                    await new Promise(resolve => setTimeout(resolve, 500))
-                    params.fifth = true
-                  },
-                  (params, context) => {
-                    assert(params.fifth, 'walked through before')
-                    if (context.app) {
-                      return { sixth: true }
+            const options = {
+              include: [
+                {
+                  service: 'users',
+                  nameAs: 'users',
+                  keyHere: 'id',
+                  keyThere: 'postsId',
+                  params: [
+                    {},
+                    { query: { second: true } },
+                    (params) => {
+                      assert(params.query.second, 'walked through before')
+                      params.third = true
+                    },
+                    (params) => {
+                      assert(params.third, 'walked through before')
+                      return { query: { fourth: true } }
+                    },
+                    async (params) => {
+                      assert(params.query.fourth, 'walked through before')
+                      await new Promise(resolve => setTimeout(resolve, 200))
+                      params.fifth = true
+                    },
+                    (params, context) => {
+                      assert(params.fifth, 'walked through before')
+                      if (context.app) {
+                        return { sixth: true }
+                      }
+                    },
+                    (params) => {
+                      assert.deepStrictEqual(params, expected, 'params object is right')
+                      calledLastFunction = true
                     }
-                  },
-                  (params) => {
-                    assert.deepStrictEqual(params, expected, 'params object is right')
-                    calledLastFunction = true
-                  }
-                ]
-              }
-            ]
-          }
-          const context = {
-            app: {
-              service (path) {
-                return services[path]
-              }
-            },
-            method: 'create',
-            type: 'after',
-            params: {},
-            result: [
-              {
-                id: '1'
-              }
-            ]
-          }
+                  ]
+                }
+              ]
+            }
+            const context = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: [
+                {
+                  id: '1'
+                }
+              ]
+            }
 
-          const shallowPopulate = makePopulate(options)
+            const shallowPopulate = makePopulate(options)
 
-          await shallowPopulate(context)
-          assert(calledLastFunction, 'all params were called')
+            await shallowPopulate(context)
+            assert(calledLastFunction, 'all params were called')
+          }
         })
       })
 
       describe('params - requestPerItem: true', () => {
         it('can pass in custom params for lookup without `keyHere` and `keyThere`', async () => {
-          const options = {
-            include: {
+          for (const { type, dataResult } of beforeAfter) {
+            const options = {
+              include: {
               // from: 'users',
-              service: 'posts',
-              nameAs: 'posts',
-              params: { fromCommentsPopulate: true }
+                service: 'posts',
+                nameAs: 'posts',
+                params: { fromCommentsPopulate: true }
+              }
             }
-          }
 
-          let hasCalledFind = false
+            let hasCalledFind = false
 
-          const context = {
-            method: 'create',
-            type: 'after',
-            app: {
-              service () {
-                return {
-                  find (params = {}) {
-                    assert(params.fromCommentsPopulate === true, 'we have a custom param')
-                    hasCalledFind = true
-                    return []
+            const context = {
+              method: 'create',
+              type,
+              app: {
+                service () {
+                  return {
+                    find (params = {}) {
+                      assert(params.fromCommentsPopulate === true, 'we have a custom param')
+                      hasCalledFind = true
+                      return []
+                    }
                   }
                 }
+              },
+              params: {},
+              [dataResult]: {
+                id: '1'
               }
-            },
-            params: {},
-            result: {
-              id: '1'
             }
+
+            const shallowPopulate = makePopulate(options)
+
+            await shallowPopulate(context)
+            assert(hasCalledFind, 'checks were made')
           }
-
-          const shallowPopulate = makePopulate(options)
-
-          await shallowPopulate(context)
-          assert(hasCalledFind, 'checks were made')
         })
 
         it('can pass in custom params function without `keyThere` and ``keyHere`', () => {
@@ -741,400 +775,416 @@ describe('shallowPopulate hook', () => {
         })
 
         it('skip request if params returns undefined', async () => {
-          const options = {
-            include: {
+          for (const { type, dataResult } of beforeAfter) {
+            const options = {
+              include: {
               // from: 'users',
-              service: 'posts',
-              nameAs: 'posts',
-              params: () => {}
+                service: 'posts',
+                nameAs: 'posts',
+                params: () => {}
+              }
             }
-          }
 
-          let hasCalledFind = false
+            let hasCalledFind = false
 
-          const context = {
-            method: 'create',
-            type: 'after',
-            app: {
-              service () {
-                return {
-                  find (params = {}) {
-                    hasCalledFind = true
-                    return []
+            const context = {
+              method: 'create',
+              type,
+              app: {
+                service () {
+                  return {
+                    find (params = {}) {
+                      hasCalledFind = true
+                      return []
+                    }
                   }
                 }
+              },
+              params: {},
+              [dataResult]: {
+                id: '1'
               }
-            },
-            params: {},
-            result: {
-              id: '1'
             }
+
+            const shallowPopulate = makePopulate(options)
+
+            await shallowPopulate(context)
+            assert(!hasCalledFind, 'skip request if params function returns undefined')
           }
-
-          const shallowPopulate = makePopulate(options)
-
-          await shallowPopulate(context)
-          assert(!hasCalledFind, 'skip request if params function returns undefined')
         })
 
         it('can pass in custom params-function which overrides params', async () => {
-          const options = {
-            include: {
+          for (const { type, dataResult } of beforeAfter) {
+            const options = {
+              include: {
               // from: 'users',
-              service: 'posts',
-              nameAs: 'posts',
-              params: (params, context) => {
-                params.query = { id: 1 }
-                return params
-              }
-            }
-          }
-
-          let hasCalledFind = false
-
-          const context = {
-            method: 'create',
-            type: 'after',
-            app: {
-              service () {
-                return {
-                  find (params = {}) {
-                    assert(params.paginate === false, 'we have the params from shallow-populate')
-                    assert(params.query.id === 1, 'we have a merged query')
-                    hasCalledFind = true
-                    return []
-                  }
+                service: 'posts',
+                nameAs: 'posts',
+                params: (params, context) => {
+                  params.query = { id: 1 }
+                  return params
                 }
               }
-            },
-            params: {},
-            result: {
-              id: '1'
             }
+
+            let hasCalledFind = false
+
+            const context = {
+              method: 'create',
+              type,
+              app: {
+                service () {
+                  return {
+                    find (params = {}) {
+                      assert(params.paginate === false, 'we have the params from shallow-populate')
+                      assert(params.query.id === 1, 'we have a merged query')
+                      hasCalledFind = true
+                      return []
+                    }
+                  }
+                }
+              },
+              params: {},
+              [dataResult]: {
+                id: '1'
+              }
+            }
+
+            const shallowPopulate = makePopulate(options)
+
+            await shallowPopulate(context)
+            assert(hasCalledFind, 'checks were made')
           }
-
-          const shallowPopulate = makePopulate(options)
-
-          await shallowPopulate(context)
-          assert(hasCalledFind, 'checks were made')
         })
 
         it('can pass in custom params-function which returns params and merges them deeply', async () => {
-          const options = {
-            include: {
+          for (const { type, dataResult } of beforeAfter) {
+            const options = {
+              include: {
               // from: 'users',
-              service: 'posts',
-              nameAs: 'posts',
-              params: () => { return { query: { $select: ['id'] } } }
+                service: 'posts',
+                nameAs: 'posts',
+                params: () => { return { query: { $select: ['id'] } } }
+              }
             }
-          }
 
-          let hasCalledFind = false
+            let hasCalledFind = false
 
-          const context = {
-            method: 'create',
-            type: 'after',
-            app: {
-              service () {
-                return {
-                  find (params = {}) {
-                    assert(params.paginate === false, 'we have the params from shallow-populate')
-                    assert.deepStrictEqual(params.query, { $select: ['id'] }, 'we have a merged query')
-                    hasCalledFind = true
-                    return []
+            const context = {
+              method: 'create',
+              type,
+              app: {
+                service () {
+                  return {
+                    find (params = {}) {
+                      assert(params.paginate === false, 'we have the params from shallow-populate')
+                      assert.deepStrictEqual(params.query, { $select: ['id'] }, 'we have a merged query')
+                      hasCalledFind = true
+                      return []
+                    }
                   }
                 }
+              },
+              params: {},
+              [dataResult]: {
+                id: '1'
               }
-            },
-            params: {},
-            result: {
-              id: '1'
             }
+
+            const shallowPopulate = makePopulate(options)
+
+            await shallowPopulate(context)
+            assert(hasCalledFind, 'checks were made')
           }
-
-          const shallowPopulate = makePopulate(options)
-
-          await shallowPopulate(context)
-          assert(hasCalledFind, 'checks were made')
         })
 
         it('can pass in custom params-function with context', async () => {
-          let paramsFunctionCalled = false
+          for (const { type, dataResult } of beforeAfter) {
+            let paramsFunctionCalled = false
 
-          const options = {
-            include: {
-              service: 'posts',
-              nameAs: 'posts',
-              params: (params, context) => {
-                assert(context.method === 'create', 'we can pass the context to include')
-                params.method = context.method
-                paramsFunctionCalled = true
-                return params
-              }
-            }
-          }
-
-          let hasCalledFind = false
-
-          const context = {
-            method: 'create',
-            type: 'after',
-            app: {
-              service () {
-                return {
-                  find (params = {}) {
-                    assert(params.method === 'create', 'we can manipulate the params based on the context')
-                    hasCalledFind = true
-                    return []
-                  }
+            const options = {
+              include: {
+                service: 'posts',
+                nameAs: 'posts',
+                params: (params, context) => {
+                  assert(context.method === 'create', 'we can pass the context to include')
+                  params.method = context.method
+                  paramsFunctionCalled = true
+                  return params
                 }
               }
-            },
-            params: {},
-            result: {
-              id: '1'
             }
+
+            let hasCalledFind = false
+
+            const context = {
+              method: 'create',
+              type,
+              app: {
+                service () {
+                  return {
+                    find (params = {}) {
+                      assert(params.method === 'create', 'we can manipulate the params based on the context')
+                      hasCalledFind = true
+                      return []
+                    }
+                  }
+                }
+              },
+              params: {},
+              [dataResult]: {
+                id: '1'
+              }
+            }
+
+            const shallowPopulate = makePopulate(options)
+
+            await shallowPopulate(context)
+            assert(paramsFunctionCalled, 'params function was called')
+            assert(hasCalledFind, 'checks were made')
           }
-
-          const shallowPopulate = makePopulate(options)
-
-          await shallowPopulate(context)
-          assert(paramsFunctionCalled, 'params function was called')
-          assert(hasCalledFind, 'checks were made')
         })
 
         it('access `this` keyword in custom params-function which matches the data item', async () => {
-          let paramsFunctionCalled = false
+          for (const { type, dataResult } of beforeAfter) {
+            let paramsFunctionCalled = false
 
-          const item = {
-            id: '11',
-            name: 'Dumb Stuff',
-            meta: {
-              postsId: ['111', '222', '333', 444, 555, '666']
-            }
-          }
-
-          const options = {
-            include: {
-              service: 'posts',
-              nameAs: 'posts',
-              params: function (params, context) {
-                assert(this === item, 'item from data is passed as `this` keyword')
-                assert(context.method === 'create', 'we can pass the context to include')
-                params.method = context.method
-                paramsFunctionCalled = true
-                return params
+            const item = {
+              id: '11',
+              name: 'Dumb Stuff',
+              meta: {
+                postsId: ['111', '222', '333', 444, 555, '666']
               }
             }
-          }
 
-          let hasCalledFind = false
-          const context = {
-            method: 'create',
-            type: 'after',
-            app: {
-              service () {
-                return {
-                  find (params = {}) {
-                    assert(params.method === 'create', 'we can manipulate the params based on the context')
-                    hasCalledFind = true
-                    return []
-                  }
+            const options = {
+              include: {
+                service: 'posts',
+                nameAs: 'posts',
+                params: function (params, context) {
+                  assert(this === item, 'item from data is passed as `this` keyword')
+                  assert(context.method === 'create', 'we can pass the context to include')
+                  params.method = context.method
+                  paramsFunctionCalled = true
+                  return params
                 }
               }
-            },
-            params: {},
-            result: item
+            }
+
+            let hasCalledFind = false
+            const context = {
+              method: 'create',
+              type,
+              app: {
+                service () {
+                  return {
+                    find (params = {}) {
+                      assert(params.method === 'create', 'we can manipulate the params based on the context')
+                      hasCalledFind = true
+                      return []
+                    }
+                  }
+                }
+              },
+              params: {},
+              [dataResult]: item
+            }
+
+            const shallowPopulate = makePopulate(options)
+
+            await shallowPopulate(context)
+            assert(paramsFunctionCalled, 'params function was called')
+            assert(hasCalledFind, 'checks were made')
           }
-
-          const shallowPopulate = makePopulate(options)
-
-          await shallowPopulate(context)
-          assert(paramsFunctionCalled, 'params function was called')
-          assert(hasCalledFind, 'checks were made')
         })
 
         it('calls params-function per include and item', async () => {
-          const items = [
-            {
-              id: '333',
-              name: 'If I were a banana...'
-            },
-            {
-              id: '111',
-              name: 'My Monkey and Me'
-            },
-            {
-              id: 444,
-              name: 'One, two, three, one, two, three, drink'
-            }
-          ]
-
-          let calledUsersParamsNTimes = 0
-          let calledCommentsParamsNTimes = 0
-
-          const options = {
-            include: [
+          for (const { type, dataResult } of beforeAfter) {
+            const items = [
               {
-                service: 'users',
-                nameAs: 'users',
-                params: () => {
-                  calledUsersParamsNTimes++
-                  return {}
-                }
+                id: '333',
+                name: 'If I were a banana...'
               },
               {
-                service: 'comments',
-                nameAs: 'comments',
-                params: () => {
-                  calledCommentsParamsNTimes++
-                  return {}
-                }
+                id: '111',
+                name: 'My Monkey and Me'
+              },
+              {
+                id: 444,
+                name: 'One, two, three, one, two, three, drink'
               }
             ]
-          }
-          const context = {
-            app: {
-              service (path) {
-                return services[path]
-              }
-            },
-            method: 'create',
-            type: 'after',
-            params: {},
-            result: items
-          }
 
-          const shallowPopulate = makePopulate(options)
+            let calledUsersParamsNTimes = 0
+            let calledCommentsParamsNTimes = 0
 
-          await shallowPopulate(context)
-          assert(calledUsersParamsNTimes === items.length, 'params function for users was called n times')
-          assert(calledCommentsParamsNTimes === items.length, 'params function for comments was called n times')
+            const options = {
+              include: [
+                {
+                  service: 'users',
+                  nameAs: 'users',
+                  params: () => {
+                    calledUsersParamsNTimes++
+                    return {}
+                  }
+                },
+                {
+                  service: 'comments',
+                  nameAs: 'comments',
+                  params: () => {
+                    calledCommentsParamsNTimes++
+                    return {}
+                  }
+                }
+              ]
+            }
+            const context = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: items
+            }
+
+            const shallowPopulate = makePopulate(options)
+
+            await shallowPopulate(context)
+            assert(calledUsersParamsNTimes === items.length, 'params function for users was called n times')
+            assert(calledCommentsParamsNTimes === items.length, 'params function for comments was called n times')
+          }
         })
 
         it('wait for params function that returns a promise', async () => {
-          let calledAsyncFunction = false
-          const options = {
-            include: {
-              service: 'posts',
-              nameAs: 'posts',
-              params: async (params, context) => {
-                await new Promise(resolve => { setTimeout(resolve, 500) })
-                params.calledAsyncFunction = true
-                calledAsyncFunction = true
-                return params
-              }
-            }
-          }
-
-          let hasCalledFind = false
-
-          const context = {
-            method: 'create',
-            type: 'after',
-            app: {
-              service () {
-                return {
-                  find (params = {}) {
-                    assert(params.calledAsyncFunction, 'waited for async params function before find')
-                    hasCalledFind = true
-                    return []
-                  }
+          for (const { type, dataResult } of beforeAfter) {
+            let calledAsyncFunction = false
+            const options = {
+              include: {
+                service: 'posts',
+                nameAs: 'posts',
+                params: async (params, context) => {
+                  await new Promise(resolve => { setTimeout(resolve, 200) })
+                  params.calledAsyncFunction = true
+                  calledAsyncFunction = true
+                  return params
                 }
               }
-            },
-            params: {},
-            result: {
-              id: '1'
             }
-          }
 
-          const shallowPopulate = makePopulate(options)
-          await shallowPopulate(context)
-          assert(calledAsyncFunction, 'waited for async params function')
-          assert(hasCalledFind, 'checks were made')
+            let hasCalledFind = false
+
+            const context = {
+              method: 'create',
+              type,
+              app: {
+                service () {
+                  return {
+                    find (params = {}) {
+                      assert(params.calledAsyncFunction, 'waited for async params function before find')
+                      hasCalledFind = true
+                      return []
+                    }
+                  }
+                }
+              },
+              params: {},
+              [dataResult]: {
+                id: '1'
+              }
+            }
+
+            const shallowPopulate = makePopulate(options)
+            await shallowPopulate(context)
+            assert(calledAsyncFunction, 'waited for async params function')
+            assert(hasCalledFind, 'checks were made')
+          }
         })
 
         it('can define params as array', async () => {
-          let calledLastFunction = false
+          for (const { type, dataResult } of beforeAfter) {
+            let calledLastFunction = false
 
-          const expected = {
-            paginate: false,
-            query: {
-              second: true,
-              fourth: true
-            },
-            third: true,
-            fifth: true,
-            sixth: true
-          }
+            const expected = {
+              paginate: false,
+              query: {
+                second: true,
+                fourth: true
+              },
+              third: true,
+              fifth: true,
+              sixth: true
+            }
 
-          const options = {
-            include: [
-              {
-                service: 'users',
-                nameAs: 'users',
-                params: [
-                  {},
-                  { query: { second: true } },
-                  (params) => {
-                    assert(params.query.second, 'walked through before')
-                    params.third = true
-                    return params
-                  },
-                  (params) => {
-                    assert(params.third, 'walked through before')
-                    return { query: { fourth: true } }
-                  },
-                  async (params) => {
-                    assert(params.query.fourth, 'walked through before')
-                    await new Promise(resolve => setTimeout(resolve, 500))
-                    params.fifth = true
-                    return params
-                  },
-                  (params, context) => {
-                    assert(params.fifth, 'walked through before')
-                    if (context.app) {
-                      return { sixth: true }
+            const options = {
+              include: [
+                {
+                  service: 'users',
+                  nameAs: 'users',
+                  params: [
+                    {},
+                    { query: { second: true } },
+                    (params) => {
+                      assert(params.query.second, 'walked through before')
+                      params.third = true
+                      return params
+                    },
+                    (params) => {
+                      assert(params.third, 'walked through before')
+                      return { query: { fourth: true } }
+                    },
+                    async (params) => {
+                      assert(params.query.fourth, 'walked through before')
+                      await new Promise(resolve => setTimeout(resolve, 200))
+                      params.fifth = true
+                      return params
+                    },
+                    (params, context) => {
+                      assert(params.fifth, 'walked through before')
+                      if (context.app) {
+                        return { sixth: true }
+                      }
+                    },
+                    (params) => {
+                      assert.deepStrictEqual(params, expected, 'params object is right')
+                      calledLastFunction = true
+                      return params
                     }
-                  },
-                  (params) => {
-                    assert.deepStrictEqual(params, expected, 'params object is right')
-                    calledLastFunction = true
-                    return params
-                  }
-                ]
-              }
-            ]
-          }
-          const context = {
-            app: {
-              service (path) {
-                return services[path]
-              }
-            },
-            method: 'create',
-            type: 'after',
-            params: {},
-            result: [
-              {
-                id: '1'
-              }
-            ]
-          }
+                  ]
+                }
+              ]
+            }
+            const context = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: [
+                {
+                  id: '1'
+                }
+              ]
+            }
 
-          const shallowPopulate = makePopulate(options)
+            const shallowPopulate = makePopulate(options)
 
-          await shallowPopulate(context)
-          assert(calledLastFunction, 'all params were called')
+            await shallowPopulate(context)
+            assert(calledLastFunction, 'all params were called')
+          }
         })
       })
     })
   })
 
   describe('populating thing', () => {
-    describe('Before Hook:', () => {
-      it('does nothing when data is empty', async () => {
+    it('does nothing when data is empty', async () => {
+      for (const { type, dataResult } of beforeAfter) {
         const options = {
           include: {
             // from: 'users',
@@ -1152,21 +1202,23 @@ describe('shallowPopulate hook', () => {
             }
           },
           method: 'create',
-          type: 'before',
+          type,
           params: {},
-          data: {}
+          [dataResult]: {}
         }
 
         const shallowPopulate = makePopulate(options)
+        const response = await shallowPopulate(context)
+        const result = response[dataResult]
 
-        const { data } = await shallowPopulate(context)
+        assert.deepStrictEqual(result, context[dataResult], `${type}: data should not be touched`)
+      }
+    })
 
-        assert.deepStrictEqual(data, context.data, 'data should not be touched')
-      })
-
-      describe('Before - Single Record:', () => {
-        describe('Before/Single - Single Relationship:', () => {
-          it('as object', async () => {
+    describe('Single Record:', () => {
+      describe('Single data/result - Single Relationship:', () => {
+        it('as object', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: {
                 // from: 'users',
@@ -1184,9 +1236,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: {
+              [dataResult]: {
                 id: '11',
                 name: 'Dumb Stuff',
                 postIds: '111'
@@ -1195,14 +1247,17 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
 
-            assert(data.post, 'post should have been populated')
-            assert(!Array.isArray(data.post), 'post should not be an array')
-            assert(data.post.id === '111', 'post has correct id')
-          })
+            assert(result.post, `${type}: post should have been populated`)
+            assert(!Array.isArray(result.post), `${type}: post should not be an array`)
+            assert(result.post.id === '111', `${type}: post has correct id`)
+          }
+        })
 
-          it('as object when array', async () => {
+        it('as object when array', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: {
                 // from: 'users',
@@ -1220,9 +1275,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: {
+              [dataResult]: {
                 id: '11',
                 name: 'Dumb Stuff',
                 postIds: ['111', '222', 444, '555']
@@ -1231,14 +1286,17 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
 
-            assert(data.post, 'post should have been populated')
-            assert(!Array.isArray(data.post), 'post should not be an array')
-            assert(data.post.id === '111', 'post has correct id')
-          })
+            assert(result.post, `${type}: post should have been populated`)
+            assert(!Array.isArray(result.post), `${type}: post should not be an array`)
+            assert(result.post.id === '111', `${type}: tpost has correct id`)
+          }
+        })
 
-          it('does nothing if no populate data on item', async () => {
+        it('does nothing if no populate data on item', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: {
                 // from: 'users',
@@ -1255,9 +1313,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: {
+              [dataResult]: {
                 id: '11',
                 name: 'Dumb Stuff'
               }
@@ -1265,12 +1323,15 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
 
-            assert(!data.posts, 'posts should have not been populated')
-          })
+            assert(!result.posts, `${type}: posts should have not been populated`)
+          }
+        })
 
-          it('populates from local keys dot notation', async () => {
+        it('populates from local keys dot notation', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: {
                 // from: 'users',
@@ -1287,9 +1348,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: {
+              [dataResult]: {
                 id: '11',
                 name: 'Dumb Stuff',
                 meta: {
@@ -1300,11 +1361,14 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(data.meta.posts.length, 'posts should have been populated')
-          })
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result.meta.posts.length, `${type}: posts should have been populated`)
+          }
+        })
 
-          it('populates from local keys', async () => {
+        it('populates from local keys', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: {
                 // from: 'users',
@@ -1321,9 +1385,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: {
+              [dataResult]: {
                 id: '11',
                 name: 'Dumb Stuff',
                 postsId: ['111', '222', '333', 444, 555, '666']
@@ -1331,12 +1395,15 @@ describe('shallowPopulate hook', () => {
             }
 
             const shallowPopulate = makePopulate(options)
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
 
-            const { data } = await shallowPopulate(context)
-            assert(data.posts.length, 'posts should have been populated')
-          })
+            assert(result.posts.length, `${type}: posts should have been populated`)
+          }
+        })
 
-          it.skip('populates empty nameAs property if no relatedItems', async () => {
+        it.skip('populates empty nameAs property if no relatedItems', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: {
                 // from: 'users',
@@ -1353,21 +1420,24 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: {
+              [dataResult]: {
                 id: '11',
                 name: 'Dumb Stuff'
               }
             }
 
             const shallowPopulate = makePopulate(options)
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
 
-            const { data } = await shallowPopulate(context)
-            assert(data.posts, 'posts should have been populated')
-          })
+            assert(result.posts, `${type}: posts should have been populated`)
+          }
+        })
 
-          it('populates from foreign keys', async () => {
+        it('populates from foreign keys', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: {
                 // from: 'posts',
@@ -1384,22 +1454,198 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: {
+              [dataResult]: {
                 id: '111',
                 name: 'My Monkey and Me'
               }
             }
 
             const shallowPopulate = makePopulate(options)
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
 
-            const { data } = await shallowPopulate(context)
-            assert(data.users, 'should have users property')
-          })
+            assert(result.users, `${type}: should have users property`)
+          }
+        })
 
-          describe('requestPerItem: true', () => {
-            it('populates with custom params $select works', async () => {
+        it('$select works without $keyThere', async () => {
+          for (const { type, dataResult } of beforeAfter) {
+            const options = {
+              include: {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id',
+                params: { query: { $select: ['name'] } }
+              }
+            }
+            const context = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: {
+                id: '11',
+                name: 'Dumb Stuff',
+                postsId: ['111', '222', '333', 444, 555, '666']
+              }
+            }
+
+            const shallowPopulate = makePopulate(options)
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+
+            assert(result.posts.length, `${type}: posts should have been populated`)
+            result.posts.forEach(post => {
+              const { name, ...rest } = post
+              assert.deepStrictEqual(rest, {}, `${type}: only has name property`)
+            })
+          }
+        })
+
+        it('$skip works as intended', async () => {
+          for (const { type, dataResult } of beforeAfter) {
+            const options1 = {
+              include: {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id',
+                params: { query: { } }
+              }
+            }
+            const context1 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: {
+                id: '11',
+                name: 'Dumb Stuff',
+                postsId: ['111', '222', '333', 444, 555, '666']
+              }
+            }
+
+            const shallowPopulate1 = makePopulate(options1)
+            const response1 = await shallowPopulate1(context1)
+            const user1 = response1[dataResult]
+
+            const options2 = {
+              include: {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id',
+                params: { query: { $skip: 1 } }
+              }
+            }
+            const context2 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: {
+                id: '11',
+                name: 'Dumb Stuff',
+                postsId: ['111', '222', '333', 444, 555, '666']
+              }
+            }
+
+            const shallowPopulate2 = makePopulate(options2)
+            const response2 = await shallowPopulate2(context2)
+            const user2 = response2[dataResult]
+
+            assert(user1.posts.length - 1 === user2.posts.length, `${type}: skipped 1 item for user2`)
+          }
+        })
+
+        it('$limit works as intended', async () => {
+          for (const { type, dataResult } of beforeAfter) {
+            const options1 = {
+              include: {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id',
+                params: { query: { } }
+              }
+            }
+            const context1 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: {
+                id: '11',
+                name: 'Dumb Stuff',
+                postsId: ['111', '222', '333', 444, 555, '666']
+              }
+            }
+
+            const shallowPopulate1 = makePopulate(options1)
+            const response1 = await shallowPopulate1(context1)
+            const user1 = response1[dataResult]
+
+            const options2 = {
+              include: {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id',
+                params: { query: { $limit: 2 } }
+              }
+            }
+            const context2 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: {
+                id: '11',
+                name: 'Dumb Stuff',
+                postsId: ['111', '222', '333', 444, 555, '666']
+              }
+            }
+
+            const shallowPopulate2 = makePopulate(options2)
+            const response2 = await shallowPopulate2(context2)
+            const user2 = response2[dataResult]
+
+            assert(user1.posts.length > user2.posts.length, `${type}: user1 has more posts than user2`)
+            assert(user2.posts.length === 2, `${type}: limited posts for user2`)
+          }
+        })
+
+        describe('requestPerItem: true', () => {
+          it('populates with custom params $select works', async () => {
+            for (const { type, dataResult } of beforeAfter) {
               const options = {
                 include: {
                   // from: 'posts',
@@ -1417,23 +1663,26 @@ describe('shallowPopulate hook', () => {
                   }
                 },
                 method: 'create',
-                type: 'before',
+                type,
                 params: {},
                 // Data for a single track
-                data: {
+                [dataResult]: {
                   id: '111',
                   name: 'My Monkey and Me'
                 }
               }
 
               const shallowPopulate = makePopulate(options)
+              const response = await shallowPopulate(context)
+              const result = response[dataResult]
 
-              const { data } = await shallowPopulate(context)
               const expected = Object.values(services.tasks.store).map(x => { return { id: x.id } })
-              assert.deepStrictEqual(data.tasks, expected, 'populated all tasks with only `id` attribute')
-            })
+              assert.deepStrictEqual(result.tasks, expected, `${type}: populated all tasks with only 'id' attribute`)
+            }
+          })
 
-            it('populates with custom params function', async () => {
+          it('populates with custom params function', async () => {
+            for (const { type, dataResult } of beforeAfter) {
               const options = {
                 include: {
                   // from: 'posts',
@@ -1451,10 +1700,10 @@ describe('shallowPopulate hook', () => {
                   }
                 },
                 method: 'create',
-                type: 'before',
+                type,
                 params: {},
                 // Data for a single track
-                data: {
+                [dataResult]: {
                   id: '111',
                   name: 'My Monkey and Me',
                   userId: '11'
@@ -1462,18 +1711,21 @@ describe('shallowPopulate hook', () => {
               }
 
               const shallowPopulate = makePopulate(options)
+              const response = await shallowPopulate(context)
+              const result = response[dataResult]
 
-              const { data } = await shallowPopulate(context)
               const expectedTasks = Object.values(services.tasks.store).filter(x => x.userId === '11')
-              assert.deepStrictEqual(data.tasks, expectedTasks, 'tasks populated correctly')
-            })
+              assert.deepStrictEqual(result.tasks, expectedTasks, `${type}: tasks populated correctly`)
+            }
           })
-
-          it.skip('handles missing _id on create', async () => {})
         })
 
-        describe('Before/Single - Multiple Relationship:', () => {
-          it('as object', async () => {
+        it.skip('handles missing _id on create', async () => {})
+      })
+
+      describe('Single data/result - Multiple Relationship:', () => {
+        it('as object', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: [
                 {
@@ -1500,9 +1752,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: {
+              [dataResult]: {
                 id: '11',
                 name: 'Dumb Stuff',
                 postIds: '111',
@@ -1512,14 +1764,17 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(data.post, 'post should have been populated')
-            assert(!Array.isArray(data.post), 'post should not be an array')
-            assert(data.post.id === '111', 'post has correct id')
-            assert(Array.isArray(data.tags), 'tags is an array')
-          })
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result.post, 'post should have been populated')
+            assert(!Array.isArray(result.post), 'post should not be an array')
+            assert(result.post.id === '111', 'post has correct id')
+            assert(Array.isArray(result.tags), 'tags is an array')
+          }
+        })
 
-          it('as object when array', async () => {
+        it('as object when array', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: [
                 {
@@ -1546,9 +1801,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: {
+              [dataResult]: {
                 id: '11',
                 name: 'Dumb Stuff',
                 postIds: ['111', '222', 444],
@@ -1558,14 +1813,17 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(data.post, 'post should have been populated')
-            assert(!Array.isArray(data.post), 'post should not be an array')
-            assert(data.post.id === '111', 'post has correct id')
-            assert(Array.isArray(data.tags), 'tags is an array')
-          })
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result.post, 'post should have been populated')
+            assert(!Array.isArray(result.post), 'post should not be an array')
+            assert(result.post.id === '111', 'post has correct id')
+            assert(Array.isArray(result.tags), 'tags is an array')
+          }
+        })
 
-          it('does nothing if some populate data on item does not exist', async () => {
+        it('does nothing if some populate data on item does not exist', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: [
                 {
@@ -1591,9 +1849,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: {
+              [dataResult]: {
                 id: '11',
                 name: 'Dumb Stuff',
                 tagIds: ['1111', '3333', 4444]
@@ -1602,12 +1860,15 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(!data.posts, 'posts should have not been populated')
-            assert(data.tags.length === 3, 'tags have been populated')
-          })
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(!result.posts, 'posts should have not been populated')
+            assert(result.tags.length === 3, 'tags have been populated')
+          }
+        })
 
-          it('populates from local keys dot notation', async () => {
+        it('populates from local keys dot notation', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: [
                 {
@@ -1633,9 +1894,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: {
+              [dataResult]: {
                 id: '11',
                 name: 'Dumb Stuff',
                 meta: {
@@ -1647,12 +1908,15 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(data.meta.posts.length, 'posts should have been populated')
-            assert(data.meta.tags.length, 'posts should have been populated')
-          })
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result.meta.posts.length, 'posts should have been populated')
+            assert(result.meta.tags.length, 'posts should have been populated')
+          }
+        })
 
-          it('populates from local keys', async () => {
+        it('populates from local keys', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: [
                 {
@@ -1678,9 +1942,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: {
+              [dataResult]: {
                 id: '11',
                 name: 'Dumb Stuff',
                 postsId: ['111', '222', '333', 444],
@@ -1690,12 +1954,14 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const result = await shallowPopulate(context)
-            const { data } = result
-            assert(data.posts.length, 'posts should have been populated')
-          })
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result.posts.length, 'posts should have been populated')
+          }
+        })
 
-          it('populates from foreign keys', async () => {
+        it('populates from foreign keys', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: [
                 {
@@ -1719,9 +1985,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: {
+              [dataResult]: {
                 id: '333',
                 name: 'If I were a banana...'
               }
@@ -1729,23 +1995,245 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(data.users.length === 1, 'data should have correct users data')
-            assert(data.comments.length === 2, 'data should have correct comments data')
-          })
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result.users.length === 1, 'data should have correct users data')
+            assert(result.comments.length === 2, 'data should have correct comments data')
+          }
+        })
 
-          describe('requestPerItem: true', () => {
-            it('populates with custom params $select works', async () => {
+        it('$select works without $keyThere', async () => {
+          for (const { type, dataResult } of beforeAfter) {
+            const options = {
+              include: [
+                {
+                  service: 'users',
+                  nameAs: 'users',
+                  keyHere: 'id',
+                  keyThere: 'postsId',
+                  params: { query: { $select: ['name'] } }
+                },
+                {
+                  service: 'comments',
+                  nameAs: 'comments',
+                  keyHere: 'id',
+                  keyThere: 'postsId'
+                }
+              ]
+            }
+            const context = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: {
+                id: '333',
+                name: 'If I were a banana...'
+              }
+            }
+
+            const shallowPopulate = makePopulate(options)
+
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result.users.length, 'posts should have been populated')
+            result.users.forEach(user => {
+              const { name, ...rest } = user
+              assert.deepStrictEqual(rest, {}, 'only has name property')
+            })
+
+            const expectedComments = Object.values(services.comments.store).filter(comment => comment.postsId.includes('333'))
+
+            assert(result.comments.length === 2, 'data should have correct comments data')
+            assert.deepStrictEqual(result.comments, expectedComments, 'comments are populated complete')
+          }
+        })
+
+        it('$skip works as intended', async () => {
+          for (const { type, dataResult } of beforeAfter) {
+            const options1 = {
+              include: [
+                {
+                  // from: 'users',
+                  service: 'posts',
+                  nameAs: 'posts',
+                  keyHere: 'postsId',
+                  keyThere: 'id',
+                  params: { query: { } }
+                },
+                {
+                  service: 'comments',
+                  nameAs: 'comments',
+                  keyHere: 'id',
+                  keyThere: 'userId'
+                }
+              ]
+            }
+
+            const context1 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: {
+                id: '11',
+                name: 'Dumb Stuff',
+                postsId: ['111', '222', '333', 444, 555, '666']
+              }
+            }
+
+            const shallowPopulate1 = makePopulate(options1)
+
+            const { [dataResult]: user1 } = await shallowPopulate1(context1)
+
+            const options2 = {
+              include: [
+                {
+                  // from: 'users',
+                  service: 'posts',
+                  nameAs: 'posts',
+                  keyHere: 'postsId',
+                  keyThere: 'id',
+                  params: { query: { $skip: 1 } }
+                },
+                {
+                  service: 'comments',
+                  nameAs: 'comments',
+                  keyHere: 'id',
+                  keyThere: 'userId'
+                }
+              ]
+            }
+            const context2 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: {
+                id: '11',
+                name: 'Dumb Stuff',
+                postsId: ['111', '222', '333', 444, 555, '666']
+              }
+            }
+
+            const shallowPopulate2 = makePopulate(options2)
+
+            const { [dataResult]: user2 } = await shallowPopulate2(context2)
+
+            assert(user1.posts.length - 1 === user2.posts.length, 'skipped 1 item for user2')
+            assert(user1.comments.length > 0, 'at least some comments')
+            assert.deepStrictEqual(user1.comments, user2.comments, 'comments are populated the same')
+          }
+        })
+
+        it('$limit works as intended', async () => {
+          for (const { type, dataResult } of beforeAfter) {
+            const options1 = {
+              include: [
+                {
+                  // from: 'users',
+                  service: 'posts',
+                  nameAs: 'posts',
+                  keyHere: 'postsId',
+                  keyThere: 'id'
+                },
+                {
+                  service: 'comments',
+                  nameAs: 'comments',
+                  keyHere: 'id',
+                  keyThere: 'userId'
+                }
+              ]
+            }
+            const context1 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: {
+                id: '11',
+                name: 'Dumb Stuff',
+                postsId: ['111', '222', '333', 444, 555, '666']
+              }
+            }
+
+            const shallowPopulate1 = makePopulate(options1)
+
+            const { [dataResult]: user1 } = await shallowPopulate1(context1)
+
+            const options2 = {
+              include: [
+                {
+                  // from: 'users',
+                  service: 'posts',
+                  nameAs: 'posts',
+                  keyHere: 'postsId',
+                  keyThere: 'id',
+                  params: { query: { $limit: 1 } }
+                },
+                {
+                  service: 'comments',
+                  nameAs: 'comments',
+                  keyHere: 'id',
+                  keyThere: 'userId'
+                }
+              ]
+            }
+            const context2 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: {
+                id: '11',
+                name: 'Dumb Stuff',
+                postsId: ['111', '222', '333', 444, 555, '666']
+              }
+            }
+
+            const shallowPopulate2 = makePopulate(options2)
+
+            const { [dataResult]: user2 } = await shallowPopulate2(context2)
+
+            assert(user1.posts.length > user2.posts.length, 'user1 has more posts than user2')
+            assert(user2.posts.length === 1, 'limited posts for user2')
+            assert.deepStrictEqual(user1.comments, user2.comments, 'comments are the same')
+          }
+        })
+
+        describe('requestPerItem: true', () => {
+          it('populates with custom params $select works', async () => {
+            for (const { type, dataResult } of beforeAfter) {
               const options = {
                 include: [
                   {
-                  // from: 'posts',
+                    // from: 'posts',
                     service: 'tasks',
                     nameAs: 'tasks',
                     params: (params, context) => { return { query: { $select: ['id'] } } }
                   },
                   {
-                  // from: 'posts',
+                    // from: 'posts',
                     service: 'comments',
                     nameAs: 'comments',
                     params: (params, context) => { return { query: { $select: ['id'] } } }
@@ -1759,10 +2247,10 @@ describe('shallowPopulate hook', () => {
                   }
                 },
                 method: 'create',
-                type: 'before',
+                type,
                 params: {},
                 // Data for a single track
-                data: {
+                [dataResult]: {
                   id: '111',
                   name: 'My Monkey and Me'
                 }
@@ -1770,19 +2258,22 @@ describe('shallowPopulate hook', () => {
 
               const shallowPopulate = makePopulate(options)
 
-              const { data } = await shallowPopulate(context)
+              const response = await shallowPopulate(context)
+              const result = response[dataResult]
               const expectedTasks = Object.values(services.tasks.store).map(x => { return { id: x.id } })
-              assert.deepStrictEqual(data.tasks, expectedTasks, 'populated all tasks with only `id` attribute')
+              assert.deepStrictEqual(result.tasks, expectedTasks, 'populated all tasks with only `id` attribute')
 
               const expectedComments = Object.values(services.comments.store).map(x => { return { id: x.id } })
-              assert.deepStrictEqual(data.comments, expectedComments, 'populated all tasks with only `id` attribute')
-            })
+              assert.deepStrictEqual(result.comments, expectedComments, 'populated all tasks with only `id` attribute')
+            }
+          })
 
-            it('populates with custom params function', async () => {
+          it('populates with custom params function', async () => {
+            for (const { type, dataResult } of beforeAfter) {
               const options = {
                 include: [
                   {
-                  // from: 'posts',
+                    // from: 'posts',
                     service: 'tasks',
                     nameAs: 'tasks',
                     params: function (params, context) {
@@ -1790,7 +2281,7 @@ describe('shallowPopulate hook', () => {
                     }
                   },
                   {
-                  // from: 'posts',
+                    // from: 'posts',
                     service: 'tags',
                     nameAs: 'tags',
                     params: function (params, context) {
@@ -1853,10 +2344,10 @@ describe('shallowPopulate hook', () => {
                   }
                 },
                 method: 'create',
-                type: 'before',
+                type,
                 params: {},
                 // Data for a single track
-                data: {
+                [dataResult]: {
                   id: '111',
                   name: 'My Monkey and Me',
                   userId: '11'
@@ -1865,28 +2356,31 @@ describe('shallowPopulate hook', () => {
 
               const shallowPopulate = makePopulate(options)
 
-              const { data } = await shallowPopulate(context)
+              const response = await shallowPopulate(context)
+              const result = response[dataResult]
               const expectedTasks = Object.values(services.tasks.store).filter(x => x.userId === '11')
-              const expectedTags = Object.values(services.tags.store).filter(x => x.userId === data.userId).map(x => { return { id: x.id } })
-              const user = Object.values(services.users.store).filter(x => x.id === data.userId)[0]
+              const expectedTags = Object.values(services.tags.store).filter(x => x.userId === result.userId).map(x => { return { id: x.id } })
+              const user = Object.values(services.users.store).filter(x => x.id === result.userId)[0]
               const expectedOrg = Object.values(services.orgs.store).filter(x => x.id === user.orgId)[0]
               const expectedTag = expectedTags[0]
-              assert.deepStrictEqual(data.tasks, expectedTasks, 'tasks populated correctly')
-              assert.deepStrictEqual(data.tags, expectedTags, 'tags populated correctly')
-              assert.deepStrictEqual(data.org, expectedOrg, 'populated org correctly')
-              assert.deepStrictEqual(data.tag, expectedTag, 'single tag populated correctly')
-              assert(data.nullTask === null, 'set default to null')
-              assert.deepStrictEqual(data.emptyTasks, [], 'set default to empty array')
-            })
+              assert.deepStrictEqual(result.tasks, expectedTasks, 'tasks populated correctly')
+              assert.deepStrictEqual(result.tags, expectedTags, 'tags populated correctly')
+              assert.deepStrictEqual(result.org, expectedOrg, 'populated org correctly')
+              assert.deepStrictEqual(result.tag, expectedTag, 'single tag populated correctly')
+              assert(result.nullTask === null, 'set default to null')
+              assert.deepStrictEqual(result.emptyTasks, [], 'set default to empty array')
+            }
           })
-
-          it.skip('handles missing _id on create', async () => {})
         })
-      })
 
-      describe('Before - Multiple Record:', () => {
-        describe('Before/Multiple - Single Relationship:', () => {
-          it('as object', async () => {
+        it.skip('handles missing _id on create', async () => {})
+      })
+    })
+
+    describe('Multiple Records:', () => {
+      describe('Multiple data/result - Single Relationship:', () => {
+        it('as object', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: {
                 // from: 'users',
@@ -1904,9 +2398,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: [
+              [dataResult]: [
                 {
                   id: '11',
                   name: 'Dumb Stuff',
@@ -1927,16 +2421,19 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(data[0].post, 'post should have been populated')
-            assert(!Array.isArray(data[0].post), 'post should not be an array')
-            assert(data[0].post.id === '111', 'post has correct id')
-            assert(data[1].post, 'post should have been populated')
-            assert(!Array.isArray(data[1].post), 'post should not be an array')
-            assert(data[1].post.id === '222', 'post has correct id')
-          })
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result[0].post, 'post should have been populated')
+            assert(!Array.isArray(result[0].post), 'post should not be an array')
+            assert(result[0].post.id === '111', 'post has correct id')
+            assert(result[1].post, 'post should have been populated')
+            assert(!Array.isArray(result[1].post), 'post should not be an array')
+            assert(result[1].post.id === '222', 'post has correct id')
+          }
+        })
 
-          it('as object when array', async () => {
+        it('as object when array', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: {
                 // from: 'users',
@@ -1954,9 +2451,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: [
+              [dataResult]: [
                 {
                   id: '11',
                   name: 'Dumb Stuff',
@@ -1977,16 +2474,19 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(data[0].post, 'post should have been populated')
-            assert(!Array.isArray(data[0].post), 'post should not be an array')
-            assert(data[0].post.id === '111', 'post has correct id')
-            assert(data[1].post, 'post should have been populated')
-            assert(!Array.isArray(data[1].post), 'post should not be an array')
-            assert(data[1].post.id === '222', 'post has correct id')
-          })
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result[0].post, 'post should have been populated')
+            assert(!Array.isArray(result[0].post), 'post should not be an array')
+            assert(result[0].post.id === '111', 'post has correct id')
+            assert(result[1].post, 'post should have been populated')
+            assert(!Array.isArray(result[1].post), 'post should not be an array')
+            assert(result[1].post.id === '222', 'post has correct id')
+          }
+        })
 
-          it('does nothing if some populate data on item does not exist', async () => {
+        it('does nothing if some populate data on item does not exist', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: {
                 // from: 'users',
@@ -2003,9 +2503,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: [
+              [dataResult]: [
                 {
                   id: '11',
                   name: 'Dumb Stuff',
@@ -2025,12 +2525,15 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(data[0].tags.length === 3, 'tags have been populated')
-            assert(!data[1].tags, 'tags have not been populated')
-          })
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result[0].tags.length === 3, 'tags have been populated')
+            assert(!result[1].tags, 'tags have not been populated')
+          }
+        })
 
-          it('populates from local keys dot notation', async () => {
+        it('populates from local keys dot notation', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: {
                 service: 'posts',
@@ -2046,9 +2549,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: [
+              [dataResult]: [
                 {
                   id: '11',
                   name: 'Dumb Stuff',
@@ -2075,12 +2578,15 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(data[0].meta.posts.length === 3, 'data[0] posts should have been populated')
-            assert(data[1].meta.posts.length === 4, 'data[0] posts should have been populated')
-          })
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result[0].meta.posts.length === 3, 'result[0] posts should have been populated')
+            assert(result[1].meta.posts.length === 4, 'result[0] posts should have been populated')
+          }
+        })
 
-          it('populates from local keys', async () => {
+        it('populates from local keys', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: {
                 // from: 'users',
@@ -2097,9 +2603,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: [
+              [dataResult]: [
                 {
                   id: '11',
                   name: 'Dumb Stuff',
@@ -2115,12 +2621,15 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(data[0].posts.length === 3, 'data[0] should have correct posts data')
-            assert(data[1].posts.length === 2, 'data[1] should have correct posts data')
-          })
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result[0].posts.length === 3, 'result[0] should have correct posts data')
+            assert(result[1].posts.length === 2, 'result[1] should have correct posts data')
+          }
+        })
 
-          it('populates from foreign keys', async () => {
+        it('populates from foreign keys', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: {
                 // from: 'posts',
@@ -2137,9 +2646,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: [
+              [dataResult]: [
                 {
                   id: '111',
                   name: 'My Monkey and Me'
@@ -2157,14 +2666,233 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            data.forEach(item => {
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            result.forEach(item => {
               assert(item.users, 'should have users property')
             })
-          })
+          }
+        })
 
-          describe('requestPerItem: true', () => {
-            it('populates with custom params $select works', async () => {
+        it('$select works without $keyThere', async () => {
+          for (const { type, dataResult } of beforeAfter) {
+            const options = {
+              include: {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id',
+                params: { query: { $select: ['name'] } }
+              }
+            }
+            const context = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: [
+                {
+                  id: '11',
+                  name: 'Dumb Stuff',
+                  postsId: ['111', '222', 444, '555']
+                },
+                {
+                  id: '22',
+                  name: 'Smart Stuff',
+                  postsId: ['333', 444, '555']
+                }
+              ]
+            }
+
+            const shallowPopulate = makePopulate(options)
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+
+            result.forEach(user => {
+              assert(user.posts.length, `${type}: posts should have been populated`)
+              user.posts.forEach(post => {
+                const { name, ...rest } = post
+                assert.deepStrictEqual(rest, {}, `${type}: only has name property`)
+              })
+            })
+          }
+        })
+
+        it('$skip works as intended', async () => {
+          for (const { type, dataResult } of beforeAfter) {
+            const options1 = {
+              include: {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id',
+                params: { query: { } }
+              }
+            }
+            const context1 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: [
+                {
+                  id: '11',
+                  name: 'Dumb Stuff',
+                  postsId: ['111', '222', 444, '555']
+                },
+                {
+                  id: '22',
+                  name: 'Smart Stuff',
+                  postsId: ['333', 444, '555']
+                }
+              ]
+            }
+
+            const shallowPopulate1 = makePopulate(options1)
+            const response1 = await shallowPopulate1(context1)
+            const users1 = response1[dataResult]
+
+            const options2 = {
+              include: {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id',
+                params: { query: { $skip: 1 } }
+              }
+            }
+            const context2 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: [
+                {
+                  id: '11',
+                  name: 'Dumb Stuff',
+                  postsId: ['111', '222', 444, '555']
+                },
+                {
+                  id: '22',
+                  name: 'Smart Stuff',
+                  postsId: ['333', 444, '555']
+                }
+              ]
+            }
+
+            const shallowPopulate2 = makePopulate(options2)
+            const response2 = await shallowPopulate2(context2)
+            const users2 = response2[dataResult]
+
+            users1.forEach((user1, i) => {
+              const user2 = users2[i]
+              assert(user1.posts.length - 1 === user2.posts.length, `${type}: skipped 1 item for user2`)
+            })
+          }
+        })
+
+        it('$limit works as intended', async () => {
+          for (const { type, dataResult } of beforeAfter) {
+            const options1 = {
+              include: {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id',
+                params: { query: { } }
+              }
+            }
+            const context1 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: [
+                {
+                  id: '11',
+                  name: 'Dumb Stuff',
+                  postsId: ['111', '222', 444, '555']
+                },
+                {
+                  id: '22',
+                  name: 'Smart Stuff',
+                  postsId: ['333', 444, '555']
+                }
+              ]
+            }
+
+            const shallowPopulate1 = makePopulate(options1)
+            const response1 = await shallowPopulate1(context1)
+            const users1 = response1[dataResult]
+
+            const options2 = {
+              include: {
+                // from: 'users',
+                service: 'posts',
+                nameAs: 'posts',
+                keyHere: 'postsId',
+                keyThere: 'id',
+                params: { query: { $limit: 1 } }
+              }
+            }
+            const context2 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: [
+                {
+                  id: '11',
+                  name: 'Dumb Stuff',
+                  postsId: ['111', '222', 444, '555']
+                },
+                {
+                  id: '22',
+                  name: 'Smart Stuff',
+                  postsId: ['333', 444, '555']
+                }
+              ]
+            }
+
+            const shallowPopulate2 = makePopulate(options2)
+            const response2 = await shallowPopulate2(context2)
+            const users2 = response2[dataResult]
+
+            users1.forEach((user1, i) => {
+              const user2 = users2[i]
+              assert(user1.posts.length > user2.posts.length, `${type}: user1 has more posts than user2`)
+              assert(user2.posts.length === 1, `${type}: limited posts for user2`)
+            })
+          }
+        })
+
+        describe('requestPerItem: true', () => {
+          it('populates with custom params $select works', async () => {
+            for (const { type, dataResult } of beforeAfter) {
               const posts = [
                 {
                   id: '111',
@@ -2197,23 +2925,26 @@ describe('shallowPopulate hook', () => {
                   }
                 },
                 method: 'create',
-                type: 'before',
+                type,
                 params: {},
                 // Data for a single track
-                data: posts
+                [dataResult]: posts
               }
 
               const shallowPopulate = makePopulate(options)
 
-              const { data } = await shallowPopulate(context)
+              const response = await shallowPopulate(context)
+              const result = response[dataResult]
 
-              data.forEach(post => {
+              result.forEach(post => {
                 const expectedTasks = Object.values(services.tasks.store).map(x => { return { id: x.id } })
                 assert.deepStrictEqual(post.tasks, expectedTasks, 'populated all tasks with only `id` attribute')
               })
-            })
+            }
+          })
 
-            it('populates with custom params function', async () => {
+          it('populates with custom params function', async () => {
+            for (const { type, dataResult } of beforeAfter) {
               const posts = [
                 {
                   id: '111',
@@ -2249,28 +2980,31 @@ describe('shallowPopulate hook', () => {
                   }
                 },
                 method: 'create',
-                type: 'before',
+                type,
                 params: {},
                 // Data for a single track
-                data: posts
+                [dataResult]: posts
               }
 
               const shallowPopulate = makePopulate(options)
 
-              const { data } = await shallowPopulate(context)
+              const response = await shallowPopulate(context)
+              const result = response[dataResult]
 
-              data.forEach(post => {
+              result.forEach(post => {
                 const expectedTasks = Object.values(services.tasks.store).filter(x => x.userId === post.userId)
                 assert.deepStrictEqual(post.tasks, expectedTasks, 'tasks populated correctly')
               })
-            })
+            }
           })
-
-          it.skip('handles missing _id on create', async () => {})
         })
 
-        describe('Before/Multiple - Multiple Relationship:', () => {
-          it('as object', async () => {
+        it.skip('handles missing _id on create', async () => {})
+      })
+
+      describe('Multiple data/result - Multiple Relationship:', () => {
+        it('as object', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: [
                 {
@@ -2297,9 +3031,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: [
+              [dataResult]: [
                 {
                   id: '11',
                   name: 'Dumb Stuff',
@@ -2323,21 +3057,24 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(data[0].post, 'post should have been populated')
-            assert(!Array.isArray(data[0].post), 'post should not be an array')
-            assert(data[0].post.id === '111', 'post has correct id')
-            assert(data[0].tags, 'tags should have been populated')
-            assert(Array.isArray(data[0].tags), 'tags should be an array')
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result[0].post, 'post should have been populated')
+            assert(!Array.isArray(result[0].post), 'post should not be an array')
+            assert(result[0].post.id === '111', 'post has correct id')
+            assert(result[0].tags, 'tags should have been populated')
+            assert(Array.isArray(result[0].tags), 'tags should be an array')
 
-            assert(data[1].post, 'post should have been populated')
-            assert(!Array.isArray(data[1].post), 'post should not be an array')
-            assert(data[1].post.id === '222', 'post has correct id')
-            assert(data[1].tags, 'tags should have been populated')
-            assert(Array.isArray(data[1].tags), 'tags should be an array')
-          })
+            assert(result[1].post, 'post should have been populated')
+            assert(!Array.isArray(result[1].post), 'post should not be an array')
+            assert(result[1].post.id === '222', 'post has correct id')
+            assert(result[1].tags, 'tags should have been populated')
+            assert(Array.isArray(result[1].tags), 'tags should be an array')
+          }
+        })
 
-          it('as object when array', async () => {
+        it('as object when array', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: [
                 {
@@ -2364,9 +3101,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: [
+              [dataResult]: [
                 {
                   id: '11',
                   name: 'Dumb Stuff',
@@ -2384,21 +3121,24 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(data[0].post, 'post should have been populated')
-            assert(!Array.isArray(data[0].post), 'post should not be an array')
-            assert(data[0].post.id === '111', 'post has correct id')
-            assert(data[0].tags, 'tags should have been populated')
-            assert(Array.isArray(data[0].tags), 'tags should be an array')
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result[0].post, 'post should have been populated')
+            assert(!Array.isArray(result[0].post), 'post should not be an array')
+            assert(result[0].post.id === '111', 'post has correct id')
+            assert(result[0].tags, 'tags should have been populated')
+            assert(Array.isArray(result[0].tags), 'tags should be an array')
 
-            assert(data[1].post, 'post should have been populated')
-            assert(!Array.isArray(data[1].post), 'post should not be an array')
-            assert(data[1].post.id === '222', 'post has correct id')
-            assert(data[1].tags, 'tags should have been populated')
-            assert(Array.isArray(data[1].tags), 'tags should be an array')
-          })
+            assert(result[1].post, 'post should have been populated')
+            assert(!Array.isArray(result[1].post), 'post should not be an array')
+            assert(result[1].post.id === '222', 'post has correct id')
+            assert(result[1].tags, 'tags should have been populated')
+            assert(Array.isArray(result[1].tags), 'tags should be an array')
+          }
+        })
 
-          it('does nothing if some populate data on item does not exist', async () => {
+        it('does nothing if some populate data on item does not exist', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: [
                 {
@@ -2424,9 +3164,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: [
+              [dataResult]: [
                 {
                   id: '11',
                   name: 'Dumb Stuff',
@@ -2442,14 +3182,17 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(data[0].posts.length === 4, 'posts have been populated')
-            assert(!data[0].tags, 'tags have not been populated')
-            assert(!data[1].tags, 'tags have not been populated')
-            assert(data[1].posts.length === 3, 'posts have been populated')
-          })
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result[0].posts.length === 4, 'posts have been populated')
+            assert(!result[0].tags, 'tags have not been populated')
+            assert(!result[1].tags, 'tags have not been populated')
+            assert(result[1].posts.length === 3, 'posts have been populated')
+          }
+        })
 
-          it('populates from local keys', async () => {
+        it('populates from local keys', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: [
                 {
@@ -2475,9 +3218,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: [
+              [dataResult]: [
                 {
                   id: '11',
                   name: 'Dumb Stuff',
@@ -2495,15 +3238,18 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(data[0].posts.length === 3, 'data[0] should have correct posts data')
-            assert(data[0].tags.length === 2, 'data[0] should have correct tags data')
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+            assert(result[0].posts.length === 3, 'result[0] should have correct posts data')
+            assert(result[0].tags.length === 2, 'result[0] should have correct tags data')
 
-            assert(data[1].posts.length === 2, 'data[1] should have correct posts data')
-            assert(data[1].tags.length === 1, 'data[1] should have correct tags data')
-          })
+            assert(result[1].posts.length === 2, 'result[1] should have correct posts data')
+            assert(result[1].tags.length === 1, 'result[1] should have correct tags data')
+          }
+        })
 
-          it('populates from foreign keys', async () => {
+        it('populates from foreign keys', async () => {
+          for (const { type, dataResult } of beforeAfter) {
             const options = {
               include: [
                 {
@@ -2527,9 +3273,9 @@ describe('shallowPopulate hook', () => {
                 }
               },
               method: 'create',
-              type: 'before',
+              type,
               params: {},
-              data: [
+              [dataResult]: [
                 {
                   id: '333',
                   name: 'If I were a banana...'
@@ -2543,1766 +3289,287 @@ describe('shallowPopulate hook', () => {
 
             const shallowPopulate = makePopulate(options)
 
-            const { data } = await shallowPopulate(context)
-            assert(data[0].users.length === 1, 'data[0] should have correct users data')
-            assert(data[0].comments.length === 2, 'data[0] should have correct comments data')
-
-            assert(data[1].users.length === 2, 'data[1] should have correct users data')
-            assert(data[1].comments.length === 2, 'data[1] should have correct comments data')
-          })
-
-          describe('requestPerItem: true', () => {
-            it('populates with custom params $select works', async () => {
-              const posts = [
-                {
-                  id: '111',
-                  name: 'My Monkey and Me'
-                },
-                {
-                  id: '222',
-                  name: 'I forgot why I love you'
-                },
-                {
-                  id: 444,
-                  name: 'One, two, three, one, two, three, drink'
-                }
-              ]
-
-              const options = {
-                include: [
-                  {
-                  // from: 'posts',
-                    service: 'tasks',
-                    nameAs: 'tasks',
-                    params: (params, context) => { return { query: { $select: ['id'] } } }
-                  },
-                  {
-                  // from: 'posts',
-                    service: 'comments',
-                    nameAs: 'comments',
-                    params: (params, context) => { return { query: { $select: ['id'] } } }
-                  }
-                ]
-              }
-              const context = {
-                app: {
-                  service (path) {
-                    return services[path]
-                  }
-                },
-                method: 'create',
-                type: 'before',
-                params: {},
-                // Data for a single track
-                data: posts
-              }
-
-              const shallowPopulate = makePopulate(options)
-
-              const { data } = await shallowPopulate(context)
-
-              data.forEach(post => {
-                const expectedTasks = Object.values(services.tasks.store).map(x => { return { id: x.id } })
-                assert.deepStrictEqual(post.tasks, expectedTasks, 'populated all tasks with only `id` attribute')
-
-                const expectedComments = Object.values(services.comments.store).map(x => { return { id: x.id } })
-                assert.deepStrictEqual(post.comments, expectedComments, 'populated all tasks with only `id` attribute')
-              })
-            })
-
-            it('populates with custom params function', async () => {
-              const posts = [
-                {
-                  id: '111',
-                  name: 'My Monkey and Me',
-                  userId: '11'
-                },
-                {
-                  id: '222',
-                  name: 'I forgot why I love you',
-                  userId: '11'
-                },
-                {
-                  id: 444,
-                  name: 'One, two, three, one, two, three, drink',
-                  userId: 44
-                }
-              ]
-
-              const options = {
-                include: [
-                  {
-                  // from: 'posts',
-                    service: 'tasks',
-                    nameAs: 'tasks',
-                    params: function (params, context) {
-                      return { query: { userId: this.userId } }
-                    }
-                  },
-                  {
-                  // from: 'posts',
-                    service: 'tags',
-                    nameAs: 'tags',
-                    params: function (params, context) {
-                      return {
-                        query: {
-                          userId: this.userId,
-                          $select: ['id']
-                        }
-                      }
-                    }
-                  },
-                  {
-                    service: 'orgs',
-                    nameAs: 'org',
-                    asArray: false,
-                    params: async function (params, context) {
-                      const user = await context.app.service('users').get(this.userId)
-                      return { query: { id: user.orgId } }
-                    }
-                  },
-                  {
-                    // from: 'posts',
-                    service: 'tags',
-                    nameAs: 'tag',
-                    asArray: false,
-                    params: [
-                      function (params, context) {
-                        return {
-                          query: {
-                            userId: this.userId
-                          }
-                        }
-                      },
-                      { query: { $select: ['id'] } }
-                    ]
-                  },
-                  {
-                    // from: 'posts',
-                    service: 'tasks',
-                    nameAs: 'nullTask',
-                    asArray: false,
-                    params: function (params, context) {
-                      return undefined
-                    }
-                  },
-                  {
-                    // from: 'posts',
-                    service: 'tasks',
-                    nameAs: 'emptyTasks',
-                    params: function (params, context) {
-                      return undefined
-                    }
-                  }
-                ]
-              }
-              const context = {
-                app: {
-                  service (path) {
-                    return services[path]
-                  }
-                },
-                method: 'create',
-                type: 'before',
-                params: {},
-                // Data for a single track
-                data: posts
-              }
-
-              const shallowPopulate = makePopulate(options)
-
-              const { data } = await shallowPopulate(context)
-
-              data.forEach(post => {
-                const expectedTasks = Object.values(services.tasks.store).filter(x => x.userId === post.userId)
-                const expectedTags = Object.values(services.tags.store).filter(x => x.userId === post.userId).map(x => { return { id: x.id } })
-                const user = Object.values(services.users.store).filter(x => x.id === post.userId)[0]
-                const expectedOrg = Object.values(services.orgs.store).filter(x => x.id === user.orgId)[0]
-                const expectedTag = expectedTags[0]
-                assert.deepStrictEqual(post.tasks, expectedTasks, 'tasks populated correctly')
-                assert.deepStrictEqual(post.tags, expectedTags, 'tags populated correctly')
-                assert.deepStrictEqual(post.org, expectedOrg, 'populated org correctly')
-                assert.deepStrictEqual(post.tag, expectedTag, 'single tag populated correctly')
-                assert(post.nullTask === null, 'set default to null')
-                assert.deepStrictEqual(post.emptyTasks, [], 'set default to empty array')
-              })
-            })
-          })
-
-          it.skip('handles missing _id on create', async () => {})
-        })
-      })
-    })
-
-    describe('After Hook', () => {
-      it('does nothing when result is empty', async () => {
-        const options = {
-          include: {
-            // from: 'users',
-            service: 'posts',
-            nameAs: 'post',
-            keyHere: 'postIds',
-            keyThere: 'id',
-            asArray: false
-          }
-        }
-        const context = {
-          app: {
-            service (path) {
-              return services[path]
-            }
-          },
-          method: 'create',
-          type: 'after',
-          params: {},
-          result: {
-            data: {}
-          }
-        }
-
-        const shallowPopulate = makePopulate(options)
-
-        const { result } = await shallowPopulate(context)
-        const { data } = result
-        assert.deepStrictEqual(data, context.result.data, 'data should not be touched')
-      })
-
-      describe('After - Single Record:', () => {
-        describe('After/Single - Single Relationship:', () => {
-          it('as object', async () => {
-            const options = {
-              include: {
-                // from: 'users',
-                service: 'posts',
-                nameAs: 'post',
-                keyHere: 'postIds',
-                keyThere: 'id',
-                asArray: false
-              }
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: {
-                data: {
-                  id: '11',
-                  name: 'Dumb Stuff',
-                  postIds: '111'
-                }
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            const { data } = result
-            assert(data.post, 'post should have been populated')
-            assert(!Array.isArray(data.post), 'post should not be an array')
-            assert(data.post.id === '111', 'post has correct id')
-          })
-
-          it('as object when array', async () => {
-            const options = {
-              include: {
-                // from: 'users',
-                service: 'posts',
-                nameAs: 'post',
-                keyHere: 'postIds',
-                keyThere: 'id',
-                asArray: false
-              }
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: {
-                data: {
-                  id: '11',
-                  name: 'Dumb Stuff',
-                  postIds: ['111', '222']
-                }
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            assert(result.data.post, 'post should have been populated')
-            assert(!Array.isArray(result.data.post), 'post should not be an array')
-            assert(result.data.post.id === '111', 'post has correct id')
-          })
-
-          it('does nothing if some populate data on item does not exist', async () => {
-            const options = {
-              include: {
-                // from: 'users',
-                service: 'tags',
-                nameAs: 'tags',
-                keyHere: 'tagIds',
-                keyThere: 'id'
-              }
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'before',
-              params: {},
-              data: {
-                id: '22',
-                name: 'Smart Stuff'
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { data } = await shallowPopulate(context)
-            assert(!data.tags, 'tags have not been populated')
-          })
-
-          it('populates from local keys dot notation', async () => {
-            const options = {
-              include: {
-                // from: 'users',
-                service: 'posts',
-                nameAs: 'meta.posts',
-                keyHere: 'meta.postsId',
-                keyThere: 'id'
-              }
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: {
-                id: '11',
-                name: 'Dumb Stuff',
-                meta: {
-                  postsId: ['111', '222', '333']
-                }
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            assert(result.meta.posts.length === 3, 'posts should have been populated')
-          })
-
-          it('populates from local keys', async () => {
-            const options = {
-              include: {
-                // from: 'users',
-                service: 'posts',
-                nameAs: 'posts',
-                keyHere: 'postsId',
-                keyThere: 'id'
-              }
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: {
-                id: '11',
-                name: 'Dumb Stuff',
-                postsId: ['111', '222', '333']
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            assert(result.posts.length, 'posts should have been populated')
-          })
-
-          it('populates from foreign keys', async () => {
-            const options = {
-              include: {
-                // from: 'posts',
-                service: 'users',
-                nameAs: 'users',
-                keyHere: 'id',
-                keyThere: 'postsId'
-              }
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              // Data for a single track
-              result: {
-                id: '111',
-                name: 'My Monkey and Me'
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            assert(result.users, 'should have users property')
-          })
-
-          describe('requestPerItem: true', () => {
-            it('populates with custom params $select works', async () => {
-              const options = {
-                include: {
-                  // from: 'posts',
-                  service: 'tasks',
-                  nameAs: 'tasks',
-                  params: (params, context) => {
-                    return { query: { $select: ['id'] } }
-                  }
-                }
-              }
-              const context = {
-                app: {
-                  service (path) {
-                    return services[path]
-                  }
-                },
-                method: 'create',
-                type: 'after',
-                params: {},
-                // Data for a single track
-                result: {
-                  id: '111',
-                  name: 'My Monkey and Me'
-                }
-              }
-
-              const shallowPopulate = makePopulate(options)
-
-              const { result } = await shallowPopulate(context)
-              const expected = Object.values(services.tasks.store).map(x => { return { id: x.id } })
-              assert.deepStrictEqual(result.tasks, expected, 'populated all tasks with only `id` attribute')
-            })
-
-            it('populates with custom params function', async () => {
-              const options = {
-                include: {
-                  // from: 'posts',
-                  service: 'tasks',
-                  nameAs: 'tasks',
-                  params: function (params, context) {
-                    return { query: { userId: this.userId } }
-                  }
-                }
-              }
-              const context = {
-                app: {
-                  service (path) {
-                    return services[path]
-                  }
-                },
-                method: 'create',
-                type: 'after',
-                params: {},
-                // Data for a single track
-                result: {
-                  id: '111',
-                  name: 'My Monkey and Me',
-                  userId: '11'
-                }
-              }
-
-              const shallowPopulate = makePopulate(options)
-
-              const { result } = await shallowPopulate(context)
-              const expectedTasks = Object.values(services.tasks.store).filter(x => x.userId === '11')
-              assert.deepStrictEqual(result.tasks, expectedTasks, 'tasks populated correctly')
-            })
-          })
-
-          it.skip('handles missing _id on create', async () => {})
-        })
-
-        describe('After/Single - Multiple Relationship:', () => {
-          it('as object', async () => {
-            const options = {
-              include: [
-                {
-                  // from: 'users',
-                  service: 'tags',
-                  nameAs: 'tags',
-                  keyHere: 'tagIds',
-                  keyThere: 'id'
-                },
-                {
-                  // from: 'users',
-                  service: 'posts',
-                  nameAs: 'post',
-                  keyHere: 'postIds',
-                  keyThere: 'id',
-                  asArray: false
-                }
-              ]
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: {
-                data: {
-                  id: '11',
-                  name: 'Dumb Stuff',
-                  postIds: '111',
-                  tagIds: ['1111']
-                }
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            const { data } = result
-            assert(data.post, 'post should have been populated')
-            assert(!Array.isArray(data.post), 'post should not be an array')
-            assert(data.post.id === '111', 'post has correct id')
-            assert(Array.isArray(data.tags), 'tags is an array')
-          })
-
-          it('as object when array', async () => {
-            const options = {
-              include: [
-                {
-                  // from: 'users',
-                  service: 'tags',
-                  nameAs: 'tags',
-                  keyHere: 'tagIds',
-                  keyThere: 'id'
-                },
-                {
-                  // from: 'users',
-                  service: 'posts',
-                  nameAs: 'post',
-                  keyHere: 'postIds',
-                  keyThere: 'id',
-                  asArray: false
-                }
-              ]
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: {
-                data: {
-                  id: '11',
-                  name: 'Dumb Stuff',
-                  postIds: ['111', '222'],
-                  tagIds: ['1111', '3333']
-                }
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            assert(result.data.post, 'post should have been populated')
-            assert(!Array.isArray(result.data.post), 'post should not be an array')
-            assert(result.data.post.id === '111', 'post has correct id')
-            assert(Array.isArray(result.data.tags), 'tags is an array')
-          })
-
-          it('does nothing if some populate data on item does not exist', async () => {
-            const options = {
-              include: [
-                {
-                  service: 'posts',
-                  nameAs: 'posts',
-                  keyHere: 'postsId',
-                  keyThere: 'id'
-                },
-                {
-                  service: 'tags',
-                  nameAs: 'tags',
-                  keyHere: 'tagIds',
-                  keyThere: 'id'
-                }
-              ]
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'before',
-              params: {},
-              data: {
-                id: '22',
-                name: 'Smart Stuff',
-                tagIds: ['1111', '3333']
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { data } = await shallowPopulate(context)
-            assert(data.tags.length === 2, 'tags have been populated')
-            assert(!data.posts, 'posts have not been populated')
-          })
-
-          it('populates from local keys dot notation', async () => {
-            const options = {
-              include: [
-                {
-                  service: 'posts',
-                  nameAs: 'meta.posts',
-                  keyHere: 'meta.postsId',
-                  keyThere: 'id'
-                },
-                {
-                  service: 'tags',
-                  nameAs: 'meta.tags',
-                  keyHere: 'meta.tagIds',
-                  keyThere: 'id'
-                }
-              ]
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: {
-                id: '11',
-                name: 'Dumb Stuff',
-                meta: {
-                  postsId: ['111', '222', '333'],
-                  tagIds: ['1111', '3333']
-                }
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            assert(result.meta.posts.length === 3, 'posts should have been populated')
-            assert(result.meta.tags.length === 2, 'tags should have been populated')
-          })
-
-          it('populates from local keys', async () => {
-            const options = {
-              include: [
-                {
-                  // from: 'users',
-                  service: 'posts',
-                  nameAs: 'posts',
-                  keyHere: 'postsId',
-                  keyThere: 'id'
-                },
-                {
-                  // from: 'users',
-                  service: 'tags',
-                  nameAs: 'tags',
-                  keyHere: 'tagIds',
-                  keyThere: 'id'
-                }
-              ]
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: {
-                id: '11',
-                name: 'Dumb Stuff',
-                postsId: ['111', '222', '333'],
-                tagIds: ['1111', '3333']
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            assert(result.posts.length, 'posts should have been populated')
-          })
-
-          it('populates from foreign keys', async () => {
-            const options = {
-              include: [
-                {
-                  service: 'users',
-                  nameAs: 'users',
-                  keyHere: 'id',
-                  keyThere: 'postsId'
-                },
-                {
-                  service: 'comments',
-                  nameAs: 'comments',
-                  keyHere: 'id',
-                  keyThere: 'postsId'
-                }
-              ]
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: {
-                id: '333',
-                name: 'If I were a banana...'
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            assert(result.users.length === 1, 'result should have correct users data')
-            assert(result.comments.length === 2, 'result should have correct comments data')
-          })
-
-          describe('requestPerItem: true', () => {
-            it('populates with custom params $select works', async () => {
-              const options = {
-                include: [
-                  {
-                  // from: 'posts',
-                    service: 'tasks',
-                    nameAs: 'tasks',
-                    params: (params, context) => { return { query: { $select: ['id'] } } }
-                  },
-                  {
-                  // from: 'posts',
-                    service: 'comments',
-                    nameAs: 'comments',
-                    params: (params, context) => { return { query: { $select: ['id'] } } }
-                  }
-                ]
-              }
-              const context = {
-                app: {
-                  service (path) {
-                    return services[path]
-                  }
-                },
-                method: 'create',
-                type: 'after',
-                params: {},
-                // Data for a single track
-                result: {
-                  id: '111',
-                  name: 'My Monkey and Me'
-                }
-              }
-
-              const shallowPopulate = makePopulate(options)
-
-              const { result } = await shallowPopulate(context)
-              const expectedTasks = Object.values(services.tasks.store).map(x => { return { id: x.id } })
-              assert.deepStrictEqual(result.tasks, expectedTasks, 'populated all tasks with only `id` attribute')
-
-              const expectedComments = Object.values(services.comments.store).map(x => { return { id: x.id } })
-              assert.deepStrictEqual(result.comments, expectedComments, 'populated all tasks with only `id` attribute')
-            })
-
-            it('populates with custom params function', async () => {
-              const options = {
-                include: [
-                  {
-                  // from: 'posts',
-                    service: 'tasks',
-                    nameAs: 'tasks',
-                    params: function (params, context) {
-                      return { query: { userId: this.userId } }
-                    }
-                  },
-                  {
-                  // from: 'posts',
-                    service: 'comments',
-                    nameAs: 'comments',
-                    params: function (params, context) {
-                      return { query: { userId: this.userId } }
-                    }
-                  },
-                  {
-                    // from: 'posts',
-                    service: 'tags',
-                    nameAs: 'tags',
-                    params: function (params, context) {
-                      return {
-                        query: {
-                          userId: this.userId,
-                          $select: ['id']
-                        }
-                      }
-                    }
-                  },
-                  {
-                    service: 'orgs',
-                    nameAs: 'org',
-                    asArray: false,
-                    params: async function (params, context) {
-                      const user = await context.app.service('users').get(this.userId)
-                      return { query: { id: user.orgId } }
-                    }
-                  },
-                  {
-                    // from: 'posts',
-                    service: 'tags',
-                    nameAs: 'tag',
-                    asArray: false,
-                    params: [
-                      function (params, context) {
-                        return {
-                          query: {
-                            userId: this.userId
-                          }
-                        }
-                      },
-                      { query: { $select: ['id'] } }
-                    ]
-                  },
-                  {
-                    // from: 'posts',
-                    service: 'tasks',
-                    nameAs: 'nullTask',
-                    asArray: false,
-                    params: function (params, context) {
-                      return undefined
-                    }
-                  },
-                  {
-                    // from: 'posts',
-                    service: 'tasks',
-                    nameAs: 'emptyTasks',
-                    params: function (params, context) {
-                      return undefined
-                    }
-                  }
-                ]
-              }
-              const context = {
-                app: {
-                  service (path) {
-                    return services[path]
-                  }
-                },
-                method: 'create',
-                type: 'after',
-                params: {},
-                // Data for a single track
-                result: {
-                  id: '111',
-                  name: 'My Monkey and Me',
-                  userId: '11'
-                }
-              }
-
-              const shallowPopulate = makePopulate(options)
-
-              const { result } = await shallowPopulate(context)
-              const expectedTasks = Object.values(services.tasks.store).filter(x => x.userId === result.userId)
-              const expectedTags = Object.values(services.tags.store).filter(x => x.userId === result.userId).map(x => { return { id: x.id } })
-              const user = Object.values(services.users.store).filter(x => x.id === result.userId)[0]
-              const expectedOrg = Object.values(services.orgs.store).filter(x => x.id === user.orgId)[0]
-              const expectedTag = expectedTags[0]
-              assert.deepStrictEqual(result.tasks, expectedTasks, 'tasks populated correctly')
-              assert.deepStrictEqual(result.tags, expectedTags, 'tags populated correctly')
-              assert.deepStrictEqual(result.org, expectedOrg, 'populated org correctly')
-              assert.deepStrictEqual(result.tag, expectedTag, 'single tag populated correctly')
-              assert(result.nullTask === null, 'set default to null')
-              assert.deepStrictEqual(result.emptyTasks, [], 'set default to empty array')
-            })
-          })
-
-          it.skip('handles missing _id on create', async () => {})
-        })
-      })
-
-      describe('After - Multiple Record:', () => {
-        describe('After/Multiple - Single Relationship:', () => {
-          it('as object', async () => {
-            const options = {
-              include: {
-                // from: 'users',
-                service: 'posts',
-                nameAs: 'post',
-                keyHere: 'postIds',
-                keyThere: 'id',
-                asArray: false
-              }
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: {
-                data: [
-                  {
-                    id: '11',
-                    name: 'Dumb Stuff',
-                    postIds: ['111', '222']
-                  },
-                  {
-                    id: '22',
-                    name: 'Smart Stuff',
-                    postIds: '222'
-                  },
-                  {
-                    id: '33',
-                    name: 'Some Stuff',
-                    postIds: ['111']
-                  }
-                ]
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-
-            const { data } = result
-
-            assert(data[0].post, 'post should have been populated')
-            assert(!Array.isArray(data[0].post), 'post should not be an array')
-            assert(data[0].post.id === '111', 'post has correct id')
-            assert(data[1].post, 'post should have been populated')
-            assert(!Array.isArray(data[1].post), 'post should not be an array')
-            assert(data[1].post.id === '222', 'post has correct id')
-          })
-
-          it('as object when array', async () => {
-            const options = {
-              include: {
-                // from: 'users',
-                service: 'posts',
-                nameAs: 'post',
-                keyHere: 'postIds',
-                keyThere: 'id',
-                asArray: false
-              }
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: {
-                data: [
-                  {
-                    id: '11',
-                    name: 'Dumb Stuff',
-                    postIds: ['111', '222']
-                  },
-                  {
-                    id: '22',
-                    name: 'Smart Stuff',
-                    postIds: ['222', '111']
-                  }
-                ]
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            const { data } = result
-            assert(data[0].post, 'post should have been populated')
-            assert(!Array.isArray(data[0].post), 'post should not be an array')
-            assert(data[0].post.id === '111', 'post has correct id')
-            assert(data[1].post, 'post should have been populated')
-            assert(!Array.isArray(data[1].post), 'post should not be an array')
-            assert(data[1].post.id === '222', 'post has correct id')
-          })
-
-          it('does nothing if some populate data on item does not exist', async () => {
-            const options = {
-              include: {
-                // from: 'users',
-                service: 'tags',
-                nameAs: 'tags',
-                keyHere: 'tagIds',
-                keyThere: 'id'
-              }
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'before',
-              params: {},
-              data: [
-                {
-                  id: '22',
-                  name: 'Smart Stuff'
-                },
-                {
-                  id: '11',
-                  name: 'Dumb Stuff'
-                }
-              ]
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { data } = await shallowPopulate(context)
-            assert(!data[0].tags, 'tags have not been populated')
-            assert(!data[1].tags, 'tags have not been populated')
-          })
-
-          it('populates from local keys dot notation', async () => {
-            const options = {
-              include: {
-                // from: 'users',
-                service: 'posts',
-                nameAs: 'meta.posts',
-                keyHere: 'meta.postsId',
-                keyThere: 'id'
-              }
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: [
-                {
-                  id: '11',
-                  name: 'Dumb Stuff',
-                  meta: {
-                    postsId: ['111', '222']
-                  }
-                },
-                {
-                  id: '22',
-                  name: 'Smart Stuff',
-                  meta: {
-                    postsId: ['333']
-                  }
-                }
-              ]
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            assert(result[0].meta.posts.length === 2, 'result[0] should have correct posts data')
-            assert(result[1].meta.posts.length === 1, 'result[1] should have correct posts data')
-          })
-
-          it('populates from local keys', async () => {
-            const options = {
-              include: {
-                // from: 'users',
-                service: 'posts',
-                nameAs: 'posts',
-                keyHere: 'postsId',
-                keyThere: 'id'
-              }
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: [
-                {
-                  id: '11',
-                  name: 'Dumb Stuff',
-                  postsId: ['111', '222']
-                },
-                {
-                  id: '22',
-                  name: 'Smart Stuff',
-                  postsId: ['333']
-                }
-              ]
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            assert(result[0].posts.length === 2, 'result[0] should have correct posts data')
-            assert(result[1].posts.length === 1, 'result[1] should have correct posts data')
-          })
-
-          it('populates from foreign keys', async () => {
-            const options = {
-              include: {
-                // from: 'posts',
-                service: 'users',
-                nameAs: 'users',
-                keyHere: 'id',
-                keyThere: 'postsId'
-              }
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: [
-                {
-                  id: '111',
-                  name: 'My Monkey and Me'
-                },
-                {
-                  id: '222',
-                  name: 'I forgot why I love you'
-                }
-              ]
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            result.forEach(item => {
-              assert(item.users, 'should have users property')
-            })
-          })
-
-          describe('requestPerItem: true', () => {
-            it('populates with custom params $select works', async () => {
-              const posts = [
-                {
-                  id: '111',
-                  name: 'My Monkey and Me'
-                },
-                {
-                  id: '222',
-                  name: 'I forgot why I love you'
-                },
-                {
-                  id: 444,
-                  name: 'One, two, three, one, two, three, drink'
-                }
-              ]
-
-              const options = {
-                include: {
-                  // from: 'posts',
-                  service: 'tasks',
-                  nameAs: 'tasks',
-                  params: (params, context) => { return { query: { $select: ['id'] } } }
-                }
-              }
-              const context = {
-                app: {
-                  service (path) {
-                    return services[path]
-                  }
-                },
-                method: 'create',
-                type: 'after',
-                params: {},
-                // Data for a single track
-                result: posts
-              }
-
-              const shallowPopulate = makePopulate(options)
-
-              const { result } = await shallowPopulate(context)
-
-              result.forEach(post => {
-                const expectedTasks = Object.values(services.tasks.store).map(x => { return { id: x.id } })
-                assert.deepStrictEqual(post.tasks, expectedTasks, 'populated all tasks with only `id` attribute')
-              })
-            })
-
-            it('populates with custom params function', async () => {
-              const posts = [
-                {
-                  id: '111',
-                  name: 'My Monkey and Me',
-                  userId: '11'
-                },
-                {
-                  id: '222',
-                  name: 'I forgot why I love you',
-                  userId: '11'
-                },
-                {
-                  id: 444,
-                  name: 'One, two, three, one, two, three, drink',
-                  userId: 44
-                }
-              ]
-
-              const options = {
-                include: {
-                  // from: 'posts',
-                  service: 'tasks',
-                  nameAs: 'tasks',
-                  params: function (params, context) {
-                    return { query: { userId: this.userId } }
-                  }
-                }
-              }
-              const context = {
-                app: {
-                  service (path) {
-                    return services[path]
-                  }
-                },
-                method: 'create',
-                type: 'after',
-                params: {},
-                // Data for a single track
-                result: posts
-              }
-
-              const shallowPopulate = makePopulate(options)
-
-              const { result } = await shallowPopulate(context)
-
-              result.forEach(post => {
-                const expectedTasks = Object.values(services.tasks.store).filter(x => x.userId === post.userId)
-                assert.deepStrictEqual(post.tasks, expectedTasks, 'tasks populated correctly')
-              })
-            })
-          })
-
-          it.skip('handles missing _id on create', async () => {})
-        })
-
-        describe('After/Multiple - Multiple Relationship:', () => {
-          it('as object', async () => {
-            const options = {
-              include: [
-                {
-                  // from: 'users',
-                  service: 'tags',
-                  nameAs: 'tags',
-                  keyHere: 'tagIds',
-                  keyThere: 'id'
-                },
-                {
-                  // from: 'users',
-                  service: 'posts',
-                  nameAs: 'post',
-                  keyHere: 'postIds',
-                  keyThere: 'id',
-                  asArray: false
-                }
-              ]
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: {
-                data: [
-                  {
-                    id: '11',
-                    name: 'Dumb Stuff',
-                    postIds: '111',
-                    tagIds: ['1111', '3333']
-                  },
-                  {
-                    id: '22',
-                    name: 'Smart Stuff',
-                    postIds: '222',
-                    tagIds: ['1111']
-                  }
-                ]
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            const { data } = result
-            assert(data[0].post, 'post should have been populated')
-            assert(!Array.isArray(data[0].post), 'post should not be an array')
-            assert(data[0].post.id === '111', 'post has correct id')
-            assert(data[0].tags, 'tags should have been populated')
-            assert(Array.isArray(data[0].tags), 'tags should be an array')
-
-            assert(data[1].post, 'post should have been populated')
-            assert(!Array.isArray(data[1].post), 'post should not be an array')
-            assert(data[1].post.id === '222', 'post has correct id')
-            assert(data[1].tags, 'tags should have been populated')
-            assert(Array.isArray(data[1].tags), 'tags should be an array')
-          })
-
-          it('as object when array', async () => {
-            const options = {
-              include: [
-                {
-                  // from: 'users',
-                  service: 'tags',
-                  nameAs: 'tags',
-                  keyHere: 'tagIds',
-                  keyThere: 'id'
-                },
-                {
-                  // from: 'users',
-                  service: 'posts',
-                  nameAs: 'post',
-                  keyHere: 'postIds',
-                  keyThere: 'id',
-                  asArray: false
-                }
-              ]
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: {
-                data: [
-                  {
-                    id: '11',
-                    name: 'Dumb Stuff',
-                    postIds: ['111', '222'],
-                    tagIds: ['1111', '3333']
-                  },
-                  {
-                    id: '22',
-                    name: 'Smart Stuff',
-                    postIds: ['222'],
-                    tagIds: ['1111']
-                  }
-                ]
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            const { data } = result
-            assert(data[0].post, 'post should have been populated')
-            assert(!Array.isArray(data[0].post), 'post should not be an array')
-            assert(data[0].post.id === '111', 'post has correct id')
-            assert(data[0].tags, 'tags should have been populated')
-            assert(Array.isArray(data[0].tags), 'tags should be an array')
-
-            assert(data[1].post, 'post should have been populated')
-            assert(!Array.isArray(data[1].post), 'post should not be an array')
-            assert(data[1].post.id === '222', 'post has correct id')
-            assert(data[1].tags, 'tags should have been populated')
-            assert(Array.isArray(data[1].tags), 'tags should be an array')
-          })
-
-          it('does nothing if some populate data on item does not exist', async () => {
-            const options = {
-              include: [
-                {
-                  service: 'posts',
-                  nameAs: 'posts',
-                  keyHere: 'postsId',
-                  keyThere: 'id'
-                },
-                {
-                  service: 'tags',
-                  nameAs: 'tags',
-                  keyHere: 'tagIds',
-                  keyThere: 'id'
-                }
-              ]
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'before',
-              params: {},
-              data: [
-                {
-                  id: '22',
-                  name: 'Smart Stuff',
-                  tagIds: ['1111', '3333']
-                },
-                {
-                  id: '11',
-                  name: 'Dumb Stuff',
-                  postsId: ['111', '333']
-                }
-              ]
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { data } = await shallowPopulate(context)
-            assert(data[0].tags.length === 2, 'tags have been populated')
-            assert(!data[0].posts, 'posts have not been populated')
-            assert(data[1].posts.length === 2, 'posts have been populated')
-            assert(!data[1].tags, 'tags have not been populated')
-          })
-
-          it('populates from local keys dot notation', async () => {
-            const options = {
-              include: [
-                {
-                  service: 'posts',
-                  nameAs: 'meta.posts',
-                  keyHere: 'meta.postsId',
-                  keyThere: 'id'
-                },
-                {
-                  service: 'tags',
-                  nameAs: 'meta.tags',
-                  keyHere: 'meta.tagIds',
-                  keyThere: 'id'
-                }
-              ]
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: {
-                data: [
-                  {
-                    id: '11',
-                    name: 'Dumb Stuff',
-                    meta: {
-                      postsId: ['111', '222', '333'],
-                      tagIds: ['1111', '3333']
-                    }
-                  },
-                  {
-                    id: '22',
-                    name: 'Smart Stuff',
-                    meta: {
-                      postsId: ['111', '333'],
-                      tagIds: ['3333']
-                    }
-                  }
-                ]
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            const { data } = result
-            assert(data[0].meta.posts.length === 3, 'result[0] should have correct posts data')
-            assert(data[0].meta.tags.length === 2, 'result[0] should have correct tags data')
-
-            assert(data[1].meta.posts.length === 2, 'result[1] should have correct posts data')
-            assert(data[1].meta.tags.length === 1, 'result[1] should have correct tags data')
-          })
-
-          it('populates from local keys', async () => {
-            const options = {
-              include: [
-                {
-                  // from: 'users',
-                  service: 'posts',
-                  nameAs: 'posts',
-                  keyHere: 'postsId',
-                  keyThere: 'id'
-                },
-                {
-                  // from: 'users',
-                  service: 'tags',
-                  nameAs: 'tags',
-                  keyHere: 'tagIds',
-                  keyThere: 'id'
-                }
-              ]
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: {
-                data: [
-                  {
-                    id: '11',
-                    name: 'Dumb Stuff',
-                    postsId: ['111', '222', '333'],
-                    tagIds: ['1111', '3333']
-                  },
-                  {
-                    id: '22',
-                    name: 'Smart Stuff',
-                    postsId: ['111', '333'],
-                    tagIds: ['3333']
-                  }
-                ]
-              }
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            const { data } = result
-            assert(data[0].posts.length === 3, 'result[0] should have correct posts data')
-            assert(data[0].tags.length === 2, 'result[0] should have correct tags data')
-
-            assert(data[1].posts.length === 2, 'result[1] should have correct posts data')
-            assert(data[1].tags.length === 1, 'result[1] should have correct tags data')
-          })
-
-          it('populates from foreign keys', async () => {
-            const options = {
-              include: [
-                {
-                  service: 'users',
-                  nameAs: 'users',
-                  keyHere: 'id',
-                  keyThere: 'postsId'
-                },
-                {
-                  service: 'comments',
-                  nameAs: 'comments',
-                  keyHere: 'id',
-                  keyThere: 'postsId'
-                }
-              ]
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: [
-                {
-                  id: '333',
-                  name: 'If I were a banana...'
-                },
-                {
-                  id: '111',
-                  name: 'My Monkey and Me'
-                },
-                {
-                  id: 444,
-                  name: 'One, two, three, one, two, three, drink'
-                }
-              ]
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
             assert(result[0].users.length === 1, 'result[0] should have correct users data')
             assert(result[0].comments.length === 2, 'result[0] should have correct comments data')
 
             assert(result[1].users.length === 2, 'result[1] should have correct users data')
             assert(result[1].comments.length === 2, 'result[1] should have correct comments data')
-          })
+          }
+        })
 
-          it('populates from nested foreign keys', async () => {
-            const options = {
-              include: [
-                {
-                  service: 'tasks',
-                  nameAs: 'tasks',
-                  keyHere: 'id',
-                  keyThere: 'taskSet.taskSetId'
-                }
-              ]
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
+        it('$select works without $keyThere', async () => {
+          for (const { type, dataResult } of beforeAfter) {
+            const posts = [
+              {
+                id: '333',
+                name: 'If I were a banana...'
               },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: [
-                { id: 'ts1', name: 'Task Set 1' },
-                { id: 'ts2', name: 'Task Set 2' },
-                { id: 'ts3', name: 'Task Set 3' },
-                { id: 4, name: 'Task Set 4' }
-              ]
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            assert(result[0].tasks.length === 1, 'result[0] should have correct users data')
-            assert(result[1].tasks.length === 2, 'result[1] should have correct comments data')
-            assert(result[2].tasks.length === 3, 'result[2] should have correct comments data')
-            assert(result[3].tasks.length === 1, 'result[3] should have correct comments data')
-          })
-
-          it('populates from nested keyHere', async () => {
-            const options = {
-              include: [
-                {
-                  service: 'taskSets',
-                  nameAs: 'taskSetData',
-                  keyHere: 'taskSet.taskSetId',
-                  keyThere: 'id',
-                  asArray: false
-                }
-              ]
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: [
-                { id: 'task1', name: 'Task 1 - belongs with TaskSet1', taskSet: { taskSetId: 'ts1' } },
-                { id: 'task2', name: 'Task 2 - belongs with TaskSet2', taskSet: { taskSetId: 'ts2' } },
-                { id: 'task3', name: 'Task 3 - belongs with TaskSet2', taskSet: { taskSetId: 'ts2' } },
-                { id: 'task4', name: 'Task 4 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
-                { id: 'task5', name: 'Task 5 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
-                { id: 'task6', name: 'Task 6 - belongs with TaskSet3', taskSet: { taskSetId: 'ts3' } },
-                { id: 7, name: 'Task 7 - belongs with TaskSet4', taskSet: { taskSetId: 4 } }
-              ]
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            result.forEach(r => {
-              assert.strictEqual(r.taskSet.taskSetId, r.taskSetData.id, 'got correct record')
-            })
-          })
-
-          it('populates from nested array', async () => {
-            const options = {
-              include: [
-                {
-                  service: 'environments',
-                  nameAs: 'envs',
-                  keyHere: 'id',
-                  keyThere: 'orgs.orgId',
-                  asArray: true
-                }
-              ]
-            }
-            const context = {
-              app: {
-                service (path) {
-                  return services[path]
-                }
-              },
-              method: 'create',
-              type: 'after',
-              params: {},
-              result: [
-                { id: 'org1', name: 'Southern Utah', memberCount: 21 },
-                { id: 'org2', name: 'Northern Utah', memberCount: 99 },
-                { id: 3, name: 'Northern Arizona', memberCount: 42 }
-              ]
-            }
-
-            const shallowPopulate = makePopulate(options)
-
-            const { result } = await shallowPopulate(context)
-            result.forEach(r => {
-              if (r.id === 'org1') {
-                assert(r.envs.length === 3, 'org1 should have two environments')
-                assert(r.envs[0].orgs[0].orgId === 'org1', 'should have at least one environment populated')
-              } else if (r.id === 'org2') {
-                assert(r.envs.length === 1, 'org2 should have one environment')
+              {
+                id: '111',
+                name: 'My Monkey and Me'
               }
-            })
-          })
+            ]
 
-          describe('requestPerItem: true', () => {
-            it('populates with custom params $select works', async () => {
+            const options = {
+              include: [
+                {
+                  // from posts
+                  service: 'users',
+                  nameAs: 'users',
+                  keyHere: 'id',
+                  keyThere: 'postsId',
+                  params: { query: { $select: ['name'] } }
+                },
+                {
+                  // from posts
+                  service: 'comments',
+                  nameAs: 'comments',
+                  keyHere: 'id',
+                  keyThere: 'postsId'
+                }
+              ]
+            }
+            const context = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: posts
+            }
+
+            const shallowPopulate = makePopulate(options)
+
+            const response = await shallowPopulate(context)
+            const result = response[dataResult]
+
+            result.forEach((post, i) => {
+              assert(post.users.length, 'posts should have been populated')
+              post.users.forEach(user => {
+                const { name, ...rest } = user
+                assert.deepStrictEqual(rest, {}, 'only has name property')
+              })
+
+              const expectedComments = Object.values(services.comments.store).filter(comment => comment.postsId.includes(posts[i].id))
+
+              assert(post.comments.length === 2, 'data should have correct comments data')
+              assert.deepStrictEqual(post.comments, expectedComments, 'comments are populated complete')
+            })
+          }
+        })
+
+        it('$skip works as intended', async () => {
+          for (const { type, dataResult } of beforeAfter) {
+            const options1 = {
+              include: [
+                {
+                  // from: 'users',
+                  service: 'posts',
+                  nameAs: 'posts',
+                  keyHere: 'postsId',
+                  keyThere: 'id',
+                  params: { query: { } }
+                },
+                {
+                  service: 'comments',
+                  nameAs: 'comments',
+                  keyHere: 'id',
+                  keyThere: 'userId'
+                }
+              ]
+            }
+
+            const context1 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: [
+                {
+                  id: '11',
+                  name: 'Dumb Stuff',
+                  postsId: ['111', '222', 444, '555']
+                },
+                {
+                  id: '22',
+                  name: 'Smart Stuff',
+                  postsId: ['333', 444, '555']
+                }
+              ]
+            }
+
+            const shallowPopulate1 = makePopulate(options1)
+
+            const { [dataResult]: users1 } = await shallowPopulate1(context1)
+
+            const options2 = {
+              include: [
+                {
+                  // from: 'users',
+                  service: 'posts',
+                  nameAs: 'posts',
+                  keyHere: 'postsId',
+                  keyThere: 'id',
+                  params: { query: { $skip: 1 } }
+                },
+                {
+                  service: 'comments',
+                  nameAs: 'comments',
+                  keyHere: 'id',
+                  keyThere: 'userId'
+                }
+              ]
+            }
+            const context2 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: [
+                {
+                  id: '11',
+                  name: 'Dumb Stuff',
+                  postsId: ['111', '222', 444, '555']
+                },
+                {
+                  id: '22',
+                  name: 'Smart Stuff',
+                  postsId: ['333', 444, '555']
+                }
+              ]
+            }
+
+            const shallowPopulate2 = makePopulate(options2)
+
+            const { [dataResult]: users2 } = await shallowPopulate2(context2)
+
+            users1.forEach((user1, i) => {
+              const user2 = users2[i]
+
+              assert(user1.posts.length - 1 === user2.posts.length, 'skipped 1 item for user2')
+              assert(user1.comments.length > 0, 'at least some comments')
+              assert.deepStrictEqual(user1.comments, user2.comments, 'comments are populated the same')
+            })
+          }
+        })
+
+        it('$limit works as intended', async () => {
+          for (const { type, dataResult } of beforeAfter) {
+            const options1 = {
+              include: [
+                {
+                  // from: 'users',
+                  service: 'posts',
+                  nameAs: 'posts',
+                  keyHere: 'postsId',
+                  keyThere: 'id'
+                },
+                {
+                  service: 'comments',
+                  nameAs: 'comments',
+                  keyHere: 'id',
+                  keyThere: 'userId'
+                }
+              ]
+            }
+            const context1 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: [
+                {
+                  id: '11',
+                  name: 'Dumb Stuff',
+                  postsId: ['111', '222', 444, '555']
+                },
+                {
+                  id: '22',
+                  name: 'Smart Stuff',
+                  postsId: ['333', 444, '555']
+                }
+              ]
+            }
+
+            const shallowPopulate1 = makePopulate(options1)
+
+            const { [dataResult]: users1 } = await shallowPopulate1(context1)
+
+            const options2 = {
+              include: [
+                {
+                  // from: 'users',
+                  service: 'posts',
+                  nameAs: 'posts',
+                  keyHere: 'postsId',
+                  keyThere: 'id',
+                  params: { query: { $limit: 1 } }
+                },
+                {
+                  service: 'comments',
+                  nameAs: 'comments',
+                  keyHere: 'id',
+                  keyThere: 'userId'
+                }
+              ]
+            }
+            const context2 = {
+              app: {
+                service (path) {
+                  return services[path]
+                }
+              },
+              method: 'create',
+              type,
+              params: {},
+              [dataResult]: [
+                {
+                  id: '11',
+                  name: 'Dumb Stuff',
+                  postsId: ['111', '222', 444, '555']
+                },
+                {
+                  id: '22',
+                  name: 'Smart Stuff',
+                  postsId: ['333', 444, '555']
+                }
+              ]
+            }
+
+            const shallowPopulate2 = makePopulate(options2)
+
+            const { [dataResult]: users2 } = await shallowPopulate2(context2)
+
+            users1.forEach((user1, i) => {
+              const user2 = users2[i]
+
+              assert(user1.posts.length > user2.posts.length, 'user1 has more posts than user2')
+              assert(user2.posts.length === 1, 'limited posts for user2')
+              assert.deepStrictEqual(user1.comments, user2.comments, 'comments are the same')
+            })
+          }
+        })
+
+        describe('requestPerItem: true', () => {
+          it('populates with custom params $select works', async () => {
+            for (const { type, dataResult } of beforeAfter) {
               const posts = [
                 {
                   id: '111',
@@ -4321,13 +3588,13 @@ describe('shallowPopulate hook', () => {
               const options = {
                 include: [
                   {
-                  // from: 'posts',
+                    // from: 'posts',
                     service: 'tasks',
                     nameAs: 'tasks',
                     params: (params, context) => { return { query: { $select: ['id'] } } }
                   },
                   {
-                  // from: 'posts',
+                    // from: 'posts',
                     service: 'comments',
                     nameAs: 'comments',
                     params: (params, context) => { return { query: { $select: ['id'] } } }
@@ -4341,15 +3608,16 @@ describe('shallowPopulate hook', () => {
                   }
                 },
                 method: 'create',
-                type: 'after',
+                type,
                 params: {},
                 // Data for a single track
-                result: posts
+                [dataResult]: posts
               }
 
               const shallowPopulate = makePopulate(options)
 
-              const { result } = await shallowPopulate(context)
+              const response = await shallowPopulate(context)
+              const result = response[dataResult]
 
               result.forEach(post => {
                 const expectedTasks = Object.values(services.tasks.store).map(x => { return { id: x.id } })
@@ -4358,9 +3626,11 @@ describe('shallowPopulate hook', () => {
                 const expectedComments = Object.values(services.comments.store).map(x => { return { id: x.id } })
                 assert.deepStrictEqual(post.comments, expectedComments, 'populated all tasks with only `id` attribute')
               })
-            })
+            }
+          })
 
-            it('populates with custom params function', async () => {
+          it('populates with custom params function', async () => {
+            for (const { type, dataResult } of beforeAfter) {
               const posts = [
                 {
                   id: '111',
@@ -4453,15 +3723,16 @@ describe('shallowPopulate hook', () => {
                   }
                 },
                 method: 'create',
-                type: 'after',
+                type,
                 params: {},
                 // Data for a single track
-                result: posts
+                [dataResult]: posts
               }
 
               const shallowPopulate = makePopulate(options)
 
-              const { result } = await shallowPopulate(context)
+              const response = await shallowPopulate(context)
+              const result = response[dataResult]
 
               result.forEach(post => {
                 const expectedTasks = Object.values(services.tasks.store).filter(x => x.userId === post.userId)
@@ -4476,11 +3747,11 @@ describe('shallowPopulate hook', () => {
                 assert(post.nullTask === null, 'set default to null')
                 assert.deepStrictEqual(post.emptyTasks, [], 'set default to empty array')
               })
-            })
+            }
           })
-
-          it.skip('handles missing _id on create', async () => {})
         })
+
+        it.skip('handles missing _id on create', async () => {})
       })
     })
   })
