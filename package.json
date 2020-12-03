@@ -45,11 +45,10 @@
     "lib": "lib"
   },
   "dependencies": {
-    "assert": "^2.0.0",
-    "feathers-hooks-common": "^5.0.4",
     "lodash": "^4.17.20"
   },
   "devDependencies": {
+    "@feathersjs/errors": "^4.5.10",
     "chai": "^4.2.0",
     "feathers-memory": "^4.1.0",
     "mocha": "^6.2.3",
