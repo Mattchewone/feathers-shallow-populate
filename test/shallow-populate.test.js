@@ -305,6 +305,46 @@ describe('shallowPopulate hook', () => {
       }
     })
 
+    it('works with falsy \'keyHere: 0\' value', async () => {
+      for (const { type, dataResult } of beforeAfter) {
+        const options = {
+          include: {
+          // from: 'posts',
+            service: 'users',
+            nameAs: 'user',
+            keyHere: 'id',
+            keyThere: 'userId'
+          }
+        }
+
+        let calledFind = false
+
+        const context = {
+          app: {
+            service (path) {
+              return {
+                find (params = {}) {
+                  calledFind = true
+                  assert.deepStrictEqual(params.query.userId.$in, [0], 'sets \'userId.$in\' accordingly')
+                }
+              }
+            }
+          },
+          method: 'create',
+          type,
+          params: {},
+          [dataResult]: {
+            id: 0
+          }
+        }
+
+        const shallowPopulate = makePopulate(options)
+        await shallowPopulate(context)
+
+        assert(calledFind, 'called find method')
+      }
+    })
+
     describe('requestPerItem: false', () => {
       it('throws if populated request throws', async () => {
         for (const { type, dataResult } of beforeAfter) {
