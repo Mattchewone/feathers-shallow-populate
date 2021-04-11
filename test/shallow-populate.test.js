@@ -277,7 +277,8 @@ describe('populating thing', () => {
               service: 'posts',
               nameAs: 'posts',
               keyHere: 'postsId',
-              keyThere: 'id'
+              keyThere: 'id',
+              asArray: false
             }
           }
           const context = {
