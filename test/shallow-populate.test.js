@@ -338,7 +338,7 @@ describe('populating thing', () => {
           const response = await shallowPopulate(context)
           const result = response[dataResult]
 
-          assert(!result.posts, `${type}: post should have not been populated`)
+          assert(!Object.prototype.hasOwnProperty.call(result, 'posts'), `${type}: post should have not been populated`)
         }
       })
 
