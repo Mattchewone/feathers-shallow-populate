@@ -277,7 +277,8 @@ describe('populating thing', () => {
               service: 'posts',
               nameAs: 'posts',
               keyHere: 'postsId',
-              keyThere: 'id'
+              keyThere: 'id',
+              asArray: false
             }
           }
           const context = {
@@ -301,6 +302,43 @@ describe('populating thing', () => {
           const result = response[dataResult]
 
           assert(!result.posts, `${type}: posts should have not been populated`)
+        }
+      })
+
+      it('does nothing if keyHere of related item is null', async () => {
+        for (const { type, dataResult } of beforeAfter) {
+          const options = {
+            include: {
+              // from: 'users',
+              service: 'posts',
+              nameAs: 'posts',
+              keyHere: 'postsId',
+              keyThere: 'id',
+              asArray: false
+            }
+          }
+          const context = {
+            app: {
+              service (path) {
+                return services[path]
+              }
+            },
+            method: 'create',
+            type,
+            params: {},
+            [dataResult]: {
+              id: '11',
+              name: 'Dumb Stuff',
+              postsId: null
+            }
+          }
+
+          const shallowPopulate = makePopulate(options)
+
+          const response = await shallowPopulate(context)
+          const result = response[dataResult]
+
+          assert(!Object.prototype.hasOwnProperty.call(result, 'posts'), `${type}: post should have not been populated`)
         }
       })
 
